@@ -15,6 +15,81 @@ class CleaningEngine:
     """
 
     @classmethod
+    def get_suggested_value_desc(cls, df: pd.DataFrame, issue: Dict[str, Any]) -> str:
+        """
+        Derives an exact human-readable description of the proposed cleaning value or strategy.
+        """
+        rule = issue.get("cleaning_rule")
+        params = issue.get("cleaning_params", {})
+        col = params.get("column") or issue.get("column")
+
+        if not rule:
+            return "Manual Inspection"
+
+        if rule in ("impute_median", "impute_mean", "impute_mode", "fill_constant"):
+            strat = "median" if "median" in rule else ("mean" if "mean" in rule else ("mode" if "mode" in rule else "constant"))
+            if col and col in df.columns:
+                full_series = df[col]
+                if strat == "median":
+                    non_null_num = pd.to_numeric(full_series, errors="coerce").dropna()
+                    val = round(float(non_null_num.median()), 2) if not non_null_num.empty else 0.0
+                    return f"Replace missing with Median: {val}"
+                elif strat == "mean":
+                    non_null_num = pd.to_numeric(full_series, errors="coerce").dropna()
+                    val = round(float(non_null_num.mean()), 2) if not non_null_num.empty else 0.0
+                    return f"Replace missing with Mean: {val}"
+                elif strat == "mode":
+                    modes = full_series.dropna().mode()
+                    val = str(modes.iloc[0]) if not modes.empty else "Unknown"
+                    return f'Replace missing with Mode: "{val}"'
+                else:
+                    val = params.get("fill_value")
+                    if val is None:
+                        val = 0 if pd.api.types.is_numeric_dtype(full_series) else "Unknown"
+                    return f'Replace missing with Constant: "{val}"'
+            return f"Impute missing with {strat}"
+
+        elif rule == "trim_whitespace":
+            return "Trim leading & trailing whitespace"
+
+        elif rule == "standardize_casing":
+            c = str(params.get("case", "title")).capitalize()
+            return f"Standardize casing to {c} Case"
+
+        elif rule == "cap_outliers":
+            lb = params.get("lower_bound", 0)
+            ub = params.get("upper_bound", 100)
+            return f"Winsorize/Cap values to [{lb}, {ub}]"
+
+        elif rule == "absolute_or_zero_floor":
+            return "Convert negative values to positive (Absolute Value)"
+
+        elif rule == "nullify_invalid_emails":
+            return "Clear/Nullify malformed email addresses"
+
+        elif rule == "standardize_dates":
+            return "Standardize date strings to YYYY-MM-DD"
+
+        elif rule == "drop_duplicate_rows":
+            return "Drop duplicate records (keep 1st occurrence)"
+
+        elif rule == "deduplicate_by_key":
+            return f"Deduplicate by key '{col}' (keep 1st)"
+
+        elif rule == "cap_percentage":
+            return "Cap percentage values to [0%, 100%]"
+
+        elif rule == "coerce_numeric":
+            return "Coerce invalid numeric text into numbers"
+
+        elif rule == "swap_chronological_order":
+            c1 = params.get("col_start")
+            c2 = params.get("col_end")
+            return f"Swap inverted dates between '{c1}' and '{c2}'"
+
+        return f"Apply rule '{rule}'"
+
+    @classmethod
     def generate_preview(cls, df: pd.DataFrame, issue: Dict[str, Any], max_samples: int = 5) -> List[Dict[str, Any]]:
         """
         Generates before-and-after previews for affected rows without altering original data.

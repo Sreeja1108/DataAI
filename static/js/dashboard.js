@@ -590,57 +590,202 @@ function renderAiInsights(understanding, plan, explanations) {
   }
 }
 
-// ----------------- DATA CLEANING CONSOLE -----------------
+// ----------------- DATA CLEANING CONSOLE (HUMAN APPROVAL INTERVENTION) -----------------
+
+let currentApprovedIssueIds = new Set();
+let activePreviewIssueId = null;
 
 function renderCleaningConsole(issues) {
   const tbody = document.getElementById("cleaningOperationsTableBody");
   tbody.innerHTML = "";
 
-  if (issues.length === 0) {
+  // Require explicit human approval: do not pre-approve by default
+  currentApprovedIssueIds.clear();
+
+  if (!issues || issues.length === 0) {
     tbody.innerHTML = `<tr><td colspan="6" class="text-center py-4 text-muted">No cleaning operations needed. Dataset is already clean!</td></tr>`;
+    updateCleaningApprovalStats(0, 0);
     return;
   }
 
   issues.forEach(iss => {
     const affectedRows = iss.affected_rows || [];
     const rowsSnippet = affectedRows.length > 0
-      ? `<br/><span class="text-danger fw-semibold" style="font-size:0.75rem;"><i class="bi bi-geo-alt me-1"></i>Rows: ${affectedRows.slice(0, 6).map(r => '#' + r).join(', ')}${affectedRows.length > 6 ? ' (+' + (affectedRows.length - 6) + ')' : ''}</span>`
+      ? `<br/><span class="text-danger fw-semibold" style="font-size:0.75rem;"><i class="bi bi-geo-alt me-1"></i>Rows: ${affectedRows.slice(0, 5).map(r => '#' + r).join(', ')}${affectedRows.length > 5 ? ' (+' + (affectedRows.length - 5) + ')' : ''}</span>`
       : '';
 
+    const suggestedDesc = iss.suggested_value_desc || `Apply ${iss.cleaning_rule || 'rule'}`;
+
     const tr = document.createElement("tr");
+    tr.id = `cleaning-row-${iss.id}`;
     tr.innerHTML = `
-      <td><input type="checkbox" class="cleaning-checkbox" data-id="${iss.id}" checked onchange="updateCleaningSelectionCount()"></td>
-      <td><b>${escapeHtml(iss.title)}</b>${rowsSnippet}<br/><small class="text-muted">${escapeHtml(iss.column || "Full Dataset")}</small></td>
-      <td><span class="badge-custom ${iss.severity === 'high' ? 'badge-high' : 'badge-medium'}">${iss.severity.toUpperCase()}</span></td>
-      <td><code>${iss.cleaning_rule || 'inspect'}</code></td>
+      <td>
+        <input type="checkbox" class="cleaning-checkbox form-check-input" data-id="${iss.id}" onchange="toggleIssueCheckbox('${iss.id}', this.checked)" title="Approve / Reject">
+      </td>
+      <td>
+        <b>${escapeHtml(iss.title)}</b>${rowsSnippet}
+        <br/><small class="text-muted">Target: <code>${escapeHtml(iss.column || "Full Dataset")}</code></small>
+      </td>
+      <td>
+        <div class="fw-semibold text-primary" style="font-size: 0.88rem;">
+          <i class="bi bi-lightbulb-fill text-warning me-1"></i>${escapeHtml(suggestedDesc)}
+        </div>
+        <small class="text-muted">Operation: <code>${escapeHtml(iss.cleaning_rule || 'inspect')}</code></small>
+      </td>
+      <td>
+        <div class="d-flex flex-column gap-1">
+          <span id="status-badge-${iss.id}" class="badge bg-warning text-dark py-1">
+            <i class="bi bi-clock me-1"></i>Pending Review
+          </span>
+          <div class="btn-group btn-group-sm">
+            <button type="button" class="btn btn-outline-success btn-sm py-0 px-2" style="font-size: 0.72rem;" onclick="setIssueApproval('${iss.id}', true)">Approve</button>
+            <button type="button" class="btn btn-outline-secondary btn-sm py-0 px-2" style="font-size: 0.72rem;" onclick="setIssueApproval('${iss.id}', false)">Reject</button>
+          </div>
+        </div>
+      </td>
       <td><b>${iss.affected_count}</b></td>
       <td>
-        <button class="btn btn-sm btn-outline-primary" onclick="showPreviewModal('${iss.id}')">
-          <i class="bi bi-eye"></i> Preview Before/After
+        <button class="btn btn-sm btn-outline-primary w-100" onclick="showPreviewModal('${iss.id}')">
+          <i class="bi bi-eye me-1"></i> Preview & Approve
         </button>
       </td>
     `;
     tbody.appendChild(tr);
   });
 
-  updateCleaningSelectionCount();
+  updateCleaningApprovalStats(0, issues.length);
 }
 
-function updateCleaningSelectionCount() {
-  const checked = document.querySelectorAll(".cleaning-checkbox:checked");
-  document.getElementById("cleaningSelectedCount").textContent = `${checked.length} Selected`;
+function setIssueApproval(issueId, approved) {
+  if (approved) {
+    currentApprovedIssueIds.add(issueId);
+  } else {
+    currentApprovedIssueIds.delete(issueId);
+  }
+
+  // Update row checkbox
+  const cb = document.querySelector(`.cleaning-checkbox[data-id="${issueId}"]`);
+  if (cb) cb.checked = approved;
+
+  // Update status badge
+  const badge = document.getElementById(`status-badge-${issueId}`);
+  if (badge) {
+    if (approved) {
+      badge.className = "badge bg-success py-1";
+      badge.innerHTML = `<i class="bi bi-check-circle me-1"></i>Approved`;
+    } else {
+      badge.className = "badge bg-secondary py-1";
+      badge.innerHTML = `<i class="bi bi-x-circle me-1"></i>Rejected`;
+    }
+  }
+
+  // Update row background
+  const row = document.getElementById(`cleaning-row-${issueId}`);
+  if (row) {
+    if (approved) {
+      row.classList.add("table-success");
+    } else {
+      row.classList.remove("table-success");
+    }
+  }
+
+  // If this issue is currently open in the preview modal, update modal badge too
+  if (activePreviewIssueId === issueId) {
+    updateModalApprovalBadge(approved);
+  }
+
+  const total = (currentSessionData && currentSessionData.issues) ? currentSessionData.issues.length : 0;
+  updateCleaningApprovalStats(currentApprovedIssueIds.size, total);
+}
+
+function toggleIssueCheckbox(issueId, checked) {
+  setIssueApproval(issueId, checked);
+}
+
+function approveAllCleaning(approve) {
+  if (!currentSessionData || !currentSessionData.issues) return;
+
+  currentSessionData.issues.forEach(iss => {
+    setIssueApproval(iss.id, approve);
+  });
+
+  const selectAll = document.getElementById("selectAllCheckbox");
+  if (selectAll) selectAll.checked = approve;
 }
 
 function toggleSelectAllCleaning(checked) {
-  document.querySelectorAll(".cleaning-checkbox").forEach(cb => cb.checked = checked);
-  document.getElementById("selectAllCheckbox").checked = checked;
-  updateCleaningSelectionCount();
+  approveAllCleaning(checked);
+}
+
+function updateCleaningApprovalStats(approvedCount, total) {
+  const summaryText = document.getElementById("humanApprovalSummaryText");
+  if (summaryText) {
+    if (approvedCount === 0) {
+      summaryText.textContent = `0 of ${total} suggested cleaning operations approved. Human approval is required: review suggested values and approve operations before cleaning.`;
+    } else {
+      summaryText.innerHTML = `<b>${approvedCount} of ${total} operations approved by user.</b> Ready to apply approved transformations to a sanitized dataset.`;
+    }
+  }
+
+  const counterBadge = document.getElementById("approvalCounterBadge");
+  if (counterBadge) {
+    counterBadge.textContent = `${approvedCount} Approved`;
+    counterBadge.className = approvedCount > 0 ? "badge bg-success fs-6 px-3 py-2" : "badge bg-warning text-dark fs-6 px-3 py-2";
+  }
+
+  const selCount = document.getElementById("cleaningSelectedCount");
+  if (selCount) {
+    selCount.textContent = `${approvedCount} Approved`;
+    selCount.className = approvedCount > 0 ? "badge bg-success" : "badge bg-secondary";
+  }
+
+  const btnCount = document.getElementById("btnApplyApprovedCount");
+  if (btnCount) btnCount.textContent = approvedCount;
+
+  const selectAll = document.getElementById("selectAllCheckbox");
+  if (selectAll) {
+    selectAll.checked = (approvedCount === total && total > 0);
+  }
+}
+
+function updateModalApprovalBadge(isApproved) {
+  const badge = document.getElementById("modalApprovalBadge");
+  if (!badge) return;
+  if (isApproved) {
+    badge.className = "badge bg-success px-3 py-2";
+    badge.innerHTML = `<i class="bi bi-check-circle me-1"></i>Status: Approved by User`;
+  } else {
+    badge.className = "badge bg-warning text-dark px-3 py-2";
+    badge.innerHTML = `<i class="bi bi-clock me-1"></i>Status: Pending Human Review`;
+  }
+}
+
+function modalApproveCurrentIssue() {
+  if (!activePreviewIssueId) return;
+  setIssueApproval(activePreviewIssueId, true);
+  showAlert("success", `Approved suggested fix for this operation.`);
+}
+
+function modalRejectCurrentIssue() {
+  if (!activePreviewIssueId) return;
+  setIssueApproval(activePreviewIssueId, false);
+  showAlert("secondary", `Rejected fix for this operation.`);
 }
 
 function showPreviewModal(issueId) {
   if (!currentSessionData) return;
   const issue = currentSessionData.issues.find(i => i.id === issueId);
   if (!issue) return;
+
+  activePreviewIssueId = issueId;
+  const isApproved = currentApprovedIssueIds.has(issueId);
+
+  // Set suggested value in callout box
+  const suggestedVal = issue.suggested_value_desc || `Apply ${issue.cleaning_rule || 'rule'}`;
+  const modalSugText = document.getElementById("modalSuggestedValueText");
+  if (modalSugText) modalSugText.textContent = suggestedVal;
+
+  updateModalApprovalBadge(isApproved);
 
   const affectedRows = issue.affected_rows || [];
   const affectedList = affectedRows.slice(0, 10).map(r => '#' + r).join(', ') + (affectedRows.length > 10 ? ` (+${affectedRows.length - 10} more)` : '');
@@ -655,7 +800,7 @@ function showPreviewModal(issueId) {
     rowPillsHtml = pills + morePill;
   }
 
-  document.getElementById("previewModalTitle").textContent = `Preview Fix: ${issue.title}`;
+  document.getElementById("previewModalTitle").textContent = `Preview & Approve Fix: ${issue.title}`;
   document.getElementById("previewModalDesc").innerHTML = `
     <div class="mb-2">
       <b>Transformation Rule:</b> <code>${escapeHtml(issue.cleaning_rule)}</code> 
@@ -682,6 +827,9 @@ function showPreviewModal(issueId) {
     .then(res => {
       tbody.innerHTML = "";
       if (res.success && res.preview.preview_samples.length > 0) {
+        if (res.preview.suggested_value && modalSugText) {
+          modalSugText.textContent = res.preview.suggested_value;
+        }
         res.preview.preview_samples.forEach(s => {
           const tr = document.createElement("tr");
           tr.innerHTML = `
@@ -707,11 +855,14 @@ function applyApprovedCleaning() {
     return;
   }
 
-  const selectedBoxes = document.querySelectorAll(".cleaning-checkbox:checked");
-  const approvedIds = Array.from(selectedBoxes).map(cb => cb.getAttribute("data-id"));
+  const approvedIds = Array.from(currentApprovedIssueIds);
 
   if (approvedIds.length === 0) {
-    showAlert("warning", "Please select at least one cleaning operation to approve.");
+    showAlert("warning", "<b>Human Approval Required:</b> No operations have been approved. Please review the suggested values and approve at least one fix before applying cleaning.");
+    return;
+  }
+
+  if (!confirm(`Confirm Human Approval: You have approved ${approvedIds.length} cleaning transformation(s). Do you want to apply them now to produce a sanitized dataset?`)) {
     return;
   }
 
@@ -726,7 +877,7 @@ function applyApprovedCleaning() {
     .then(res => {
       hideLoading();
       if (res.success) {
-        showAlert("success", `Sanitization complete! Applied ${res.cleaning_result.actions_applied} cleaning action(s). Quality Score improved from ${res.cleaning_result.initial_score}% to ${res.cleaning_result.new_score}%!`);
+        showAlert("success", `Sanitization complete! Applied ${res.cleaning_result.actions_applied} human-approved cleaning action(s). Quality Score improved from ${res.cleaning_result.initial_score}% to ${res.cleaning_result.new_score}%!`);
 
         // Show cleaning audit card
         const auditCard = document.getElementById("cleaningAuditCard");
@@ -831,6 +982,14 @@ function downloadArtifactFile(filename) {
 // Expose globally for inline onclick handlers
 window.downloadCleanedData = downloadCleanedData;
 window.downloadArtifact = downloadArtifact;
+window.setIssueApproval = setIssueApproval;
+window.toggleIssueCheckbox = toggleIssueCheckbox;
+window.approveAllCleaning = approveAllCleaning;
+window.toggleSelectAllCleaning = toggleSelectAllCleaning;
+window.modalApproveCurrentIssue = modalApproveCurrentIssue;
+window.modalRejectCurrentIssue = modalRejectCurrentIssue;
+window.showPreviewModal = showPreviewModal;
+window.applyApprovedCleaning = applyApprovedCleaning;
 
 // ----------------- UTILITIES -----------------
 

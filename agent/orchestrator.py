@@ -63,6 +63,8 @@ class DataGuardAgent:
         # STEP 5: ISSUE DETECTION (Python deterministic execution as ground truth)
         logger.info(f"Session {session_id}: Executing deterministic detector registry.")
         issues = self.detector_registry.execute_all(original_df, profile)
+        for iss in issues:
+            iss["suggested_value_desc"] = CleaningEngine.get_suggested_value_desc(original_df, iss)
         session.issues = issues
 
         # STEP 6: QUALITY SCORING (Deterministic 25/20/30/25 formula)
@@ -95,10 +97,12 @@ class DataGuardAgent:
             raise ValueError(f"Issue {issue_id} not found in session {session_id}.")
 
         preview_rows = CleaningEngine.generate_preview(session.original_df, issue)
+        suggested_val = issue.get("suggested_value_desc") or CleaningEngine.get_suggested_value_desc(session.original_df, issue)
         return {
             "issue_id": issue_id,
             "title": issue["title"],
             "cleaning_rule": issue.get("cleaning_rule"),
+            "suggested_value": suggested_val,
             "preview_samples": preview_rows
         }
 
