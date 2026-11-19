@@ -743,18 +743,41 @@ function generateReports(preferredType) {
     });
 }
 
-function downloadArtifact(sessionId, format) {
-  generateReports(format === "csv" ? "cleaned_csv" : "cleaned_xlsx");
+function downloadCleanedData(format) {
+  if (!currentSessionData) {
+    showAlert("warning", "No dataset analyzed or cleaned yet. Please analyze a dataset first.");
+    return;
+  }
+  generateReports(format === "xlsx" ? "cleaned_xlsx" : "cleaned_csv");
+}
+
+function downloadArtifact(arg1, arg2) {
+  const format = (arg2 || arg1 || "csv");
+  downloadCleanedData(format);
 }
 
 function downloadArtifactFile(filename) {
+  if (!filename) return;
+  const url = `/api/download/${encodeURIComponent(filename)}`;
+  
+  // Create clickable link
   const link = document.createElement("a");
-  link.href = `/api/download/${filename}`;
-  link.download = filename;
+  link.href = url;
+  link.setAttribute("download", filename);
   document.body.appendChild(link);
   link.click();
-  document.body.removeChild(link);
+  setTimeout(() => {
+    if (link.parentNode) {
+      link.parentNode.removeChild(link);
+    }
+  }, 300);
+
+  showAlert("success", `Download ready: <b>${escapeHtml(filename)}</b>! If it didn't start automatically, <a href="${url}" download="${filename}" class="alert-link fw-bold text-decoration-underline">click here to download directly</a>.`);
 }
+
+// Expose globally for inline onclick handlers
+window.downloadCleanedData = downloadCleanedData;
+window.downloadArtifact = downloadArtifact;
 
 // ----------------- UTILITIES -----------------
 

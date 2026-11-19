@@ -598,10 +598,10 @@
           <div class="card-body-custom">
             <ul id="cleaningAuditList" class="list-group mb-3"></ul>
             <div class="d-flex gap-2">
-              <button class="btn btn-primary-custom" onclick="downloadArtifact(lastSessionData.session_id, 'csv')">
+              <button class="btn btn-primary-custom" onclick="downloadCleanedData('csv')">
                 <i class="bi bi-download me-1"></i> Download Cleaned CSV
               </button>
-              <button class="btn btn-outline-primary" onclick="downloadArtifact(lastSessionData.session_id, 'xlsx')">
+              <button class="btn btn-outline-primary" onclick="downloadCleanedData('xlsx')">
                 <i class="bi bi-file-earmark-excel me-1"></i> Download Cleaned Excel
               </button>
             </div>
@@ -611,7 +611,7 @@
 
       <!-- ================= SECTION 8: REPORTS & EXPORTS ================= -->
       <div id="section-reports" class="content-section d-none">
-        <div class="row g-4">
+        <div class="row g-4 mb-4">
           <div class="col-lg-6">
             <div class="card-custom p-4 text-center h-100">
               <i class="bi bi-file-earmark-pdf text-danger fs-1 mb-3"></i>
@@ -630,6 +630,30 @@
               <p class="text-muted mb-4">Formatted spreadsheet containing 4 dedicated tabs: Executive Summary, Column Quality Scores, Detected Issues & Anomalies, and the Cleaning Audit Log.</p>
               <button id="btnGenExcel" class="btn btn-success mt-auto" onclick="generateReports('excel')">
                 <i class="bi bi-download me-2"></i>Download Multi-Sheet Excel Summary
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="row g-4">
+          <div class="col-lg-6">
+            <div class="card-custom p-4 text-center h-100">
+              <i class="bi bi-filetype-csv text-primary fs-1 mb-3"></i>
+              <h4 class="fw-bold text-primary mb-2">Cleaned Dataset (CSV)</h4>
+              <p class="text-muted mb-4">Download the sanitized dataset in standardized CSV format with all user-approved transformations applied. Preserves original row alignments.</p>
+              <button id="btnGenCleanCsv" class="btn btn-primary-custom mt-auto" onclick="downloadCleanedData('csv')">
+                <i class="bi bi-download me-2"></i>Download Cleaned CSV Dataset
+              </button>
+            </div>
+          </div>
+
+          <div class="col-lg-6">
+            <div class="card-custom p-4 text-center h-100">
+              <i class="bi bi-file-earmark-spreadsheet text-info fs-1 mb-3"></i>
+              <h4 class="fw-bold text-primary mb-2">Cleaned Dataset (Excel)</h4>
+              <p class="text-muted mb-4">Download the sanitized dataset in Microsoft Excel (.xlsx) spreadsheet format ready for immediate BI and reporting use.</p>
+              <button id="btnGenCleanXlsx" class="btn btn-outline-primary mt-auto" onclick="downloadCleanedData('xlsx')">
+                <i class="bi bi-download me-2"></i>Download Cleaned Excel Dataset
               </button>
             </div>
           </div>
