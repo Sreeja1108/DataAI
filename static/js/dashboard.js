@@ -634,13 +634,34 @@ function showPreviewModal(issueId) {
   const issue = currentSessionData.issues.find(i => i.id === issueId);
   if (!issue) return;
 
-  const affectedList = (issue.affected_rows || []).slice(0, 10).map(r => 'Row #' + r).join(', ');
-  const moreText = (issue.affected_rows || []).length > 10 ? ` (+${issue.affected_rows.length - 10} more)` : '';
+  const affectedRows = issue.affected_rows || [];
+  const affectedList = affectedRows.slice(0, 10).map(r => '#' + r).join(', ') + (affectedRows.length > 10 ? ` (+${affectedRows.length - 10} more)` : '');
+  let rowPillsHtml = '<span class="text-muted small">None</span>';
+  if (affectedRows.length > 0) {
+    const maxPills = 15;
+    const pills = affectedRows.slice(0, maxPills).map(r => 
+      `<span class="badge bg-danger text-white me-1 mb-1" style="font-size: 0.78rem; font-weight: 500;">Row #${r}</span>`
+    ).join('');
+    const morePill = affectedRows.length > maxPills ? 
+      `<span class="badge bg-secondary text-white mb-1" style="font-size: 0.78rem;">+${affectedRows.length - maxPills} more</span>` : '';
+    rowPillsHtml = pills + morePill;
+  }
 
   document.getElementById("previewModalTitle").textContent = `Preview Fix: ${issue.title}`;
   document.getElementById("previewModalDesc").innerHTML = `
-    <div class="mb-1"><b>Transformation Rule:</b> <code>${escapeHtml(issue.cleaning_rule)}</code> &nbsp;|&nbsp; <b>Target Column:</b> <code>${escapeHtml(issue.column || "Full Dataset")}</code></div>
-    <div><b>Identified Defect Row Numbers:</b> <span class="badge bg-danger fs-6">${affectedList || 'None'}${moreText}</span></div>
+    <div class="mb-2">
+      <b>Transformation Rule:</b> <code>${escapeHtml(issue.cleaning_rule)}</code> 
+      <span class="mx-2 text-muted">|</span> 
+      <b>Target Column:</b> <code>${escapeHtml(issue.column || "Full Dataset")}</code>
+    </div>
+    <div class="p-2 rounded bg-light border mb-2">
+      <div class="fw-semibold text-dark small mb-1">
+        <i class="bi bi-geo-alt-fill text-danger me-1"></i>Identified Defect Row Numbers (${affectedRows.length} total):
+      </div>
+      <div class="d-flex flex-wrap gap-1 align-items-center" style="max-height: 90px; overflow-y: auto; word-break: break-word;">
+        ${rowPillsHtml}
+      </div>
+    </div>
   `;
 
   const tbody = document.getElementById("previewModalTableBody");

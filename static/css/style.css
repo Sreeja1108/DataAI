@@ -391,3 +391,29 @@ body {
   padding: 2px 6px;
   border-radius: 4px;
 }
+
+/* Modal and Row Number Badge Overflow Protection */
+.modal-body {
+  overflow-x: hidden;
+  word-break: break-word;
+}
+
+#previewModalDesc {
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
+.badge-row-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  align-items: center;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
+.issue-card {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
