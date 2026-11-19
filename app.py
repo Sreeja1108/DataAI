@@ -123,12 +123,13 @@ def apply_cleaning(session_id: str):
     """Applies user-approved cleaning fixes to generate a cleaned dataset."""
     data = request.get_json() or {}
     approved_ids = data.get("approved_issue_ids", [])
+    manual_overrides = data.get("manual_overrides", {})
 
     if not approved_ids:
         return jsonify({"error": "No issues selected for cleaning."}), 400
 
     try:
-        result = agent.execute_cleaning(session_id, approved_ids)
+        result = agent.execute_cleaning(session_id, approved_ids, manual_overrides=manual_overrides)
         session = DatasetSessionContext.get_session(session_id)
         payload = ResultManager.format_dashboard_payload(session)
         return jsonify({

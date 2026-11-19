@@ -98,17 +98,35 @@ class DataGuardAgent:
 
         preview_rows = CleaningEngine.generate_preview(session.original_df, issue)
         suggested_val = issue.get("suggested_value_desc") or CleaningEngine.get_suggested_value_desc(session.original_df, issue)
+        raw_val = CleaningEngine.get_raw_suggested_value(session.original_df, issue)
+
+        # Get current anomaly sample values
+        col = issue.get("column")
+        current_anomalies = []
+        if col and col in session.original_df.columns:
+            affected_rows = issue.get("affected_rows", [])
+            if "_row_number" in session.original_df.columns and affected_rows:
+                raw_samples = session.original_df[session.original_df["_row_number"].isin(affected_rows[:10])][col].tolist()
+                current_anomalies = [("<MISSING / NULL>" if (pd.isna(x) or str(x).strip() == "" or str(x).lower() == "nan") else str(x)) for x in raw_samples]
+            else:
+                current_anomalies = [str(x) for x in issue.get("problematic_samples", [])[:10]]
+        else:
+            current_anomalies = [str(x) for x in issue.get("problematic_samples", [])[:10]]
+
         return {
             "issue_id": issue_id,
             "title": issue["title"],
             "cleaning_rule": issue.get("cleaning_rule"),
             "suggested_value": suggested_val,
+            "raw_suggested_value": raw_val,
+            "current_anomalies": current_anomalies,
             "preview_samples": preview_rows
         }
 
-    def execute_cleaning(self, session_id: str, approved_issue_ids: list) -> Dict[str, Any]:
+    def execute_cleaning(self, session_id: str, approved_issue_ids: list, manual_overrides: dict = None) -> Dict[str, Any]:
         """
         STEP 8 Part B: Applies approved operations onto a fresh copy of the dataset.
+        Honors user-entered manual overrides where provided.
         """
         session = DatasetSessionContext.get_session(session_id)
         if not session:
@@ -117,7 +135,8 @@ class DataGuardAgent:
         cleaned_df, audit_log = CleaningEngine.apply_cleaning(
             df=session.original_df,
             approved_issue_ids=approved_issue_ids,
-            all_issues=session.issues
+            all_issues=session.issues,
+            manual_overrides=manual_overrides
         )
 
         session.cleaned_df = cleaned_df

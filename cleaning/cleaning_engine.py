@@ -227,19 +227,56 @@ class CleaningEngine:
         return preview_data
 
     @classmethod
+    def get_raw_suggested_value(cls, df: pd.DataFrame, issue: Dict[str, Any]) -> str:
+        """
+        Derives the raw replacement value for pre-populating manual edit inputs.
+        """
+        rule = issue.get("cleaning_rule")
+        params = issue.get("cleaning_params", {})
+        col = params.get("column") or issue.get("column")
+        if not rule or not col or col not in df.columns:
+            return ""
+
+        full_series = df[col]
+        if rule == "impute_median":
+            non_null_num = pd.to_numeric(full_series, errors="coerce").dropna()
+            return str(round(float(non_null_num.median()), 2)) if not non_null_num.empty else "0.0"
+        elif rule == "impute_mean":
+            non_null_num = pd.to_numeric(full_series, errors="coerce").dropna()
+            return str(round(float(non_null_num.mean()), 2)) if not non_null_num.empty else "0.0"
+        elif rule == "impute_mode":
+            modes = full_series.dropna().mode()
+            return str(modes.iloc[0]) if not modes.empty else "Unknown"
+        elif rule == "fill_constant":
+            val = params.get("fill_value")
+            if val is not None:
+                return str(val)
+            return "0" if pd.api.types.is_numeric_dtype(full_series) else "Unknown"
+        elif rule == "standardize_casing":
+            c = str(params.get("case", "title"))
+            return c
+        elif rule == "cap_outliers":
+            ub = params.get("upper_bound")
+            return str(ub) if ub is not None else ""
+        return ""
+
+    @classmethod
     def apply_cleaning(
         cls,
         df: pd.DataFrame,
         approved_issue_ids: List[str],
-        all_issues: List[Dict[str, Any]]
+        all_issues: List[Dict[str, Any]],
+        manual_overrides: Optional[Dict[str, Any]] = None
     ) -> Tuple[pd.DataFrame, List[Dict[str, Any]]]:
         """
-        Applies only the user-approved operations onto a fresh copy of the DataFrame.
+        Applies user-approved operations onto a fresh copy of the DataFrame.
+        Honors human-entered manual replacement values if provided.
         Returns:
             (cleaned_df, audit_log)
         """
         cleaned_df = df.copy()
         audit_log = []
+        manual_overrides = manual_overrides or {}
 
         # Map issues by ID
         issues_dict = {iss["id"]: iss for iss in all_issues}
@@ -252,8 +289,41 @@ class CleaningEngine:
             rule = issue.get("cleaning_rule")
             params = issue.get("cleaning_params", {})
             col = params.get("column") or issue.get("column")
+            affected_rows = issue.get("affected_rows", [])
+
+            # Check if user entered a custom manual override value
+            has_manual_override = (issue_id in manual_overrides and manual_overrides[issue_id] is not None and str(manual_overrides[issue_id]).strip() != "")
 
             try:
+                if has_manual_override and col and col in cleaned_df.columns:
+                    manual_val = manual_overrides[issue_id]
+                    # Attempt numeric cast if target column is numeric
+                    if pd.api.types.is_numeric_dtype(cleaned_df[col]):
+                        try:
+                            if "." in str(manual_val):
+                                manual_val = float(manual_val)
+                            else:
+                                manual_val = int(manual_val)
+                        except ValueError:
+                            cleaned_df[col] = cleaned_df[col].astype(object)
+
+                    if "_row_number" in cleaned_df.columns and affected_rows:
+                        row_mask = cleaned_df["_row_number"].isin(affected_rows)
+                        count = int(row_mask.sum())
+                        cleaned_df.loc[row_mask, col] = manual_val
+                    else:
+                        cleaned_df, meta = CleaningOperations.impute_missing(
+                            cleaned_df, col, strategy="constant", fill_value=manual_val
+                        )
+                        count = meta.get("modified_rows", 0)
+
+                    audit_log.append({
+                        "operation": f"User manual correction applied: '{manual_val}'",
+                        "column": col,
+                        "modified_rows": count
+                    })
+                    continue
+
                 if rule in ("impute_median", "impute_mean", "impute_mode", "fill_constant"):
                     strat = "median" if "median" in rule else ("mean" if "mean" in rule else ("mode" if "mode" in rule else "constant"))
                     cleaned_df, meta = CleaningOperations.impute_missing(

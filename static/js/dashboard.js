@@ -594,6 +594,9 @@ function renderAiInsights(understanding, plan, explanations) {
 
 let currentApprovedIssueIds = new Set();
 let activePreviewIssueId = null;
+let manualOverridesMap = new Map(); // issueId -> manualValue string
+let currentModalPreviewSamples = []; // cached sample rows
+let currentSuggestedRawValue = "";
 
 function renderCleaningConsole(issues) {
   const tbody = document.getElementById("cleaningOperationsTableBody");
@@ -615,6 +618,9 @@ function renderCleaningConsole(issues) {
       : '';
 
     const suggestedDesc = iss.suggested_value_desc || `Apply ${iss.cleaning_rule || 'rule'}`;
+    const sampleProblems = (iss.problematic_samples || []).slice(0, 3).map(s => escapeHtml(String(s))).join(", ");
+    const hasManual = manualOverridesMap.has(iss.id);
+    const manualVal = manualOverridesMap.get(iss.id);
 
     const tr = document.createElement("tr");
     tr.id = `cleaning-row-${iss.id}`;
@@ -627,10 +633,15 @@ function renderCleaningConsole(issues) {
         <br/><small class="text-muted">Target: <code>${escapeHtml(iss.column || "Full Dataset")}</code></small>
       </td>
       <td>
-        <div class="fw-semibold text-primary" style="font-size: 0.88rem;">
-          <i class="bi bi-lightbulb-fill text-warning me-1"></i>${escapeHtml(suggestedDesc)}
+        <div class="small text-danger mb-1">
+          <i class="bi bi-exclamation-triangle-fill me-1"></i><b>Current:</b> <code>${sampleProblems || 'N/A'}</code>
         </div>
-        <small class="text-muted">Operation: <code>${escapeHtml(iss.cleaning_rule || 'inspect')}</code></small>
+        <div class="fw-semibold text-primary" style="font-size: 0.88rem;">
+          <i class="bi bi-lightbulb-fill text-warning me-1"></i><b>Suggested:</b> ${escapeHtml(suggestedDesc)}
+        </div>
+        <div id="row-manual-badge-${iss.id}">
+          ${hasManual ? `<span class="badge bg-info text-dark mt-1"><i class="bi bi-pencil-fill me-1"></i>Manual: "${escapeHtml(manualVal)}"</span>` : ''}
+        </div>
       </td>
       <td>
         <div class="d-flex flex-column gap-1">
@@ -760,10 +771,100 @@ function updateModalApprovalBadge(isApproved) {
   }
 }
 
+function onCorrectionStrategyChanged() {
+  const isManual = document.getElementById("radioStrategyManual").checked;
+  const manualInput = document.getElementById("manualValueInput");
+  const applyBtn = document.getElementById("btnApplyManualToPreview");
+
+  if (isManual) {
+    manualInput.disabled = false;
+    applyBtn.disabled = false;
+    if (!manualInput.value && currentSuggestedRawValue) {
+      manualInput.placeholder = `e.g. ${currentSuggestedRawValue}`;
+    }
+    manualInput.focus();
+    applyManualValueToPreview();
+  } else {
+    manualInput.disabled = true;
+    applyBtn.disabled = true;
+    if (activePreviewIssueId) {
+      manualOverridesMap.delete(activePreviewIssueId);
+      updateRowManualBadge(activePreviewIssueId, null);
+    }
+    renderModalPreviewTable(currentModalPreviewSamples, null);
+  }
+}
+
+function onManualValueInput(val) {
+  if (document.getElementById("radioStrategyManual").checked) {
+    applyManualValueToPreview();
+  }
+}
+
+function applyManualValueToPreview() {
+  if (!activePreviewIssueId) return;
+  const val = document.getElementById("manualValueInput").value;
+  manualOverridesMap.set(activePreviewIssueId, val);
+  updateRowManualBadge(activePreviewIssueId, val);
+  renderModalPreviewTable(currentModalPreviewSamples, val);
+}
+
+function updateRowManualBadge(issueId, manualVal) {
+  const container = document.getElementById(`row-manual-badge-${issueId}`);
+  if (container) {
+    if (manualVal !== null && manualVal !== undefined && manualVal !== "") {
+      container.innerHTML = `<span class="badge bg-info text-dark mt-1"><i class="bi bi-pencil-fill me-1"></i>Manual: "${escapeHtml(manualVal)}"</span>`;
+    } else {
+      container.innerHTML = "";
+    }
+  }
+}
+
+function renderModalPreviewTable(samples, manualOverrideVal) {
+  const tbody = document.getElementById("previewModalTableBody");
+  tbody.innerHTML = "";
+
+  if (!samples || samples.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="4" class="text-center py-3 text-muted">No sample row changes generated or row dropped.</td></tr>`;
+    return;
+  }
+
+  samples.forEach(s => {
+    const tr = document.createElement("tr");
+    const afterDisplay = (manualOverrideVal !== null && manualOverrideVal !== undefined && manualOverrideVal !== "")
+      ? `<span class="diff-add border border-info">${escapeHtml(manualOverrideVal)} <small class="text-muted fst-italic">(Manual Override)</small></span>`
+      : `<span class="diff-add">${escapeHtml(s.after)}</span>`;
+
+    tr.innerHTML = `
+      <td><span class="badge bg-primary fs-6">Row #${s.row}</span></td>
+      <td><code>${escapeHtml(s.column)}</code></td>
+      <td><span class="diff-del">${escapeHtml(s.before)}</span></td>
+      <td>${afterDisplay}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
 function modalApproveCurrentIssue() {
   if (!activePreviewIssueId) return;
+
+  const isManual = document.getElementById("radioStrategyManual").checked;
+  if (isManual) {
+    const val = document.getElementById("manualValueInput").value.trim();
+    if (!val) {
+      showAlert("warning", "Please enter a manual value before approving with manual override.");
+      document.getElementById("manualValueInput").focus();
+      return;
+    }
+    manualOverridesMap.set(activePreviewIssueId, val);
+    updateRowManualBadge(activePreviewIssueId, val);
+  } else {
+    manualOverridesMap.delete(activePreviewIssueId);
+    updateRowManualBadge(activePreviewIssueId, null);
+  }
+
   setIssueApproval(activePreviewIssueId, true);
-  showAlert("success", `Approved suggested fix for this operation.`);
+  showAlert("success", `Approved correction for this operation!`);
 }
 
 function modalRejectCurrentIssue() {
@@ -779,11 +880,30 @@ function showPreviewModal(issueId) {
 
   activePreviewIssueId = issueId;
   const isApproved = currentApprovedIssueIds.has(issueId);
+  const hasManual = manualOverridesMap.has(issueId);
+  const existingManualVal = manualOverridesMap.get(issueId) || "";
 
-  // Set suggested value in callout box
-  const suggestedVal = issue.suggested_value_desc || `Apply ${issue.cleaning_rule || 'rule'}`;
-  const modalSugText = document.getElementById("modalSuggestedValueText");
-  if (modalSugText) modalSugText.textContent = suggestedVal;
+  // Set radios and inputs
+  const radioSuggested = document.getElementById("radioStrategySuggested");
+  const radioManual = document.getElementById("radioStrategyManual");
+  const manualInput = document.getElementById("manualValueInput");
+  const applyBtn = document.getElementById("btnApplyManualToPreview");
+
+  if (hasManual && existingManualVal !== "") {
+    if (radioManual) radioManual.checked = true;
+    if (manualInput) {
+      manualInput.disabled = false;
+      manualInput.value = existingManualVal;
+    }
+    if (applyBtn) applyBtn.disabled = false;
+  } else {
+    if (radioSuggested) radioSuggested.checked = true;
+    if (manualInput) {
+      manualInput.disabled = true;
+      manualInput.value = "";
+    }
+    if (applyBtn) applyBtn.disabled = true;
+  }
 
   updateModalApprovalBadge(isApproved);
 
@@ -800,7 +920,7 @@ function showPreviewModal(issueId) {
     rowPillsHtml = pills + morePill;
   }
 
-  document.getElementById("previewModalTitle").textContent = `Preview & Approve Fix: ${issue.title}`;
+  document.getElementById("previewModalTitle").textContent = `Review & Approve Correction: ${issue.title}`;
   document.getElementById("previewModalDesc").innerHTML = `
     <div class="mb-2">
       <b>Transformation Rule:</b> <code>${escapeHtml(issue.cleaning_rule)}</code> 
@@ -818,28 +938,41 @@ function showPreviewModal(issueId) {
   `;
 
   const tbody = document.getElementById("previewModalTableBody");
-  tbody.innerHTML = `<tr><td colspan="4" class="text-center py-3">Generating sample preview...</td></tr>`;
+  tbody.innerHTML = `<tr><td colspan="4" class="text-center py-3">Loading current values and generating correction preview...</td></tr>`;
 
   if (previewModalInstance) previewModalInstance.show();
 
   fetch(`/api/preview-cleaning/${currentSessionData.session_id}/${issueId}`)
     .then(r => r.json())
     .then(res => {
-      tbody.innerHTML = "";
-      if (res.success && res.preview.preview_samples.length > 0) {
-        if (res.preview.suggested_value && modalSugText) {
-          modalSugText.textContent = res.preview.suggested_value;
+      if (res.success && res.preview) {
+        currentModalPreviewSamples = res.preview.preview_samples || [];
+        currentSuggestedRawValue = res.preview.raw_suggested_value || "";
+
+        // Render current anomalies list
+        const anomaliesList = res.preview.current_anomalies || [];
+        const countBadge = document.getElementById("modalAnomalyCountBadge");
+        if (countBadge) countBadge.textContent = `${anomaliesList.length} unique/sample value(s)`;
+
+        const anomaliesContainer = document.getElementById("modalCurrentAnomaliesList");
+        if (anomaliesContainer) {
+          if (anomaliesList.length > 0) {
+            anomaliesContainer.innerHTML = anomaliesList.map(v => 
+              `<span class="badge bg-light text-danger border fw-bold font-monospace me-1 mb-1">${escapeHtml(v)}</span>`
+            ).join("");
+          } else {
+            anomaliesContainer.innerHTML = `<span class="text-muted">None detected</span>`;
+          }
         }
-        res.preview.preview_samples.forEach(s => {
-          const tr = document.createElement("tr");
-          tr.innerHTML = `
-            <td><span class="badge bg-primary fs-6">Row #${s.row}</span></td>
-            <td><code>${escapeHtml(s.column)}</code></td>
-            <td><span class="diff-del">${escapeHtml(s.before)}</span></td>
-            <td><span class="diff-add">${escapeHtml(s.after)}</span></td>
-          `;
-          tbody.appendChild(tr);
-        });
+
+        // Update suggested text
+        const sugText = res.preview.suggested_value || issue.suggested_value_desc || `Apply ${issue.cleaning_rule}`;
+        const modalSugText = document.getElementById("modalSuggestedValueText");
+        if (modalSugText) modalSugText.textContent = sugText;
+
+        // Render preview table
+        const activeManualVal = hasManual && existingManualVal !== "" ? existingManualVal : null;
+        renderModalPreviewTable(currentModalPreviewSamples, activeManualVal);
       } else {
         tbody.innerHTML = `<tr><td colspan="4" class="text-center py-3 text-muted">No sample row changes generated or row dropped. Identified affected rows: <b>${affectedList}</b></td></tr>`;
       }
@@ -862,7 +995,22 @@ function applyApprovedCleaning() {
     return;
   }
 
-  if (!confirm(`Confirm Human Approval: You have approved ${approvedIds.length} cleaning transformation(s). Do you want to apply them now to produce a sanitized dataset?`)) {
+  const manualOverridesObj = {};
+  currentApprovedIssueIds.forEach(id => {
+    if (manualOverridesMap.has(id)) {
+      const val = manualOverridesMap.get(id);
+      if (val !== null && val !== undefined && val !== "") {
+        manualOverridesObj[id] = val;
+      }
+    }
+  });
+
+  const manualCount = Object.keys(manualOverridesObj).length;
+  const promptMsg = manualCount > 0
+    ? `Confirm Human Approval: You have approved ${approvedIds.length} cleaning transformation(s), including ${manualCount} custom manual override(s). Proceed?`
+    : `Confirm Human Approval: You have approved ${approvedIds.length} cleaning transformation(s). Proceed?`;
+
+  if (!confirm(promptMsg)) {
     return;
   }
 
@@ -871,7 +1019,10 @@ function applyApprovedCleaning() {
   fetch(`/api/apply-cleaning/${currentSessionData.session_id}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ approved_issue_ids: approvedIds })
+    body: JSON.stringify({
+      approved_issue_ids: approvedIds,
+      manual_overrides: manualOverridesObj
+    })
   })
     .then(r => r.json())
     .then(res => {
@@ -990,6 +1141,9 @@ window.modalApproveCurrentIssue = modalApproveCurrentIssue;
 window.modalRejectCurrentIssue = modalRejectCurrentIssue;
 window.showPreviewModal = showPreviewModal;
 window.applyApprovedCleaning = applyApprovedCleaning;
+window.onCorrectionStrategyChanged = onCorrectionStrategyChanged;
+window.onManualValueInput = onManualValueInput;
+window.applyManualValueToPreview = applyManualValueToPreview;
 
 // ----------------- UTILITIES -----------------
 
