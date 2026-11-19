@@ -46,14 +46,19 @@ class MissingValueDetector:
                     severity = "low"
 
                 # Suggest cleaning rule based on column type
-                if col_profile.get("physical_type") in ("integer", "float"):
-                    suggested_action = "impute_median" if col_profile.get("semantic_type") == "numeric_measure" else "fill_constant"
+                is_numeric = col_profile.get("physical_type") in ("integer", "float")
+                if is_numeric:
+                    suggested_action = "impute_median"
+                    default_fill = 0
                 elif col_profile.get("physical_type") == "categorical":
                     suggested_action = "impute_mode"
+                    default_fill = "Unknown"
                 elif is_id:
                     suggested_action = "drop_rows"
+                    default_fill = None
                 else:
                     suggested_action = "fill_constant"
+                    default_fill = "Unknown"
 
                 issues.append({
                     "id": f"miss_{col}",
@@ -71,7 +76,7 @@ class MissingValueDetector:
                     "cleaning_rule": suggested_action,
                     "cleaning_params": {
                         "column": col,
-                        "fill_value": "Unknown" if suggested_action == "fill_constant" else None
+                        "fill_value": default_fill if suggested_action == "fill_constant" else None
                     }
                 })
 

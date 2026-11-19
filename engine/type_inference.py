@@ -84,13 +84,17 @@ class TypeInferrer:
         if pd.api.types.is_numeric_dtype(series):
             is_int = pd.api.types.is_integer_dtype(series) or (series.dropna() % 1 == 0).all()
             unique_ratio = series.nunique() / total_non_null if total_non_null > 0 else 0
+            col_lower = col_name.lower()
 
-            # Could it be an ID / identifier?
-            if is_int and (unique_ratio > 0.85 or ID_COL_REGEX.search(col_name)):
+            measure_terms = ("salary", "inr", "usd", "eur", "price", "amount", "cost", "revenue", "rate", "total", "balance", "count", "qty", "quantity", "age", "score", "weight", "height", "distance", "fee", "margin", "tax", "profit", "sum")
+            is_measure = any(term in col_lower for term in measure_terms)
+
+            # Check if identifier (must match ID naming and not be a measure)
+            if ID_COL_REGEX.search(col_name) and not is_measure:
                 semantic = "identifier"
             elif series.min() >= 0 and series.max() <= 1 and not is_int:
                 semantic = "ratio_or_probability"
-            elif series.min() >= 0 and series.max() <= 100 and "pct" in col_name.lower():
+            elif series.min() >= 0 and series.max() <= 100 and "pct" in col_lower:
                 semantic = "percentage"
             else:
                 semantic = "numeric_measure"

@@ -464,6 +464,14 @@ function renderIssuesCards(issues) {
 
     const sampleBadges = (iss.problematic_samples || []).slice(0, 4).map(s => `<span class="badge bg-light text-dark border me-1">${escapeHtml(String(s))}</span>`).join("");
 
+    const affectedRows = iss.affected_rows || [];
+    let rowBadges = '<span class="text-muted">None</span>';
+    if (affectedRows.length > 0) {
+      const displayRows = affectedRows.slice(0, 12).map(r => `<span class="badge bg-light text-danger border fw-bold me-1">Row #${r}</span>`).join("");
+      const moreCount = affectedRows.length > 12 ? `<span class="badge bg-secondary">+${affectedRows.length - 12} more</span>` : "";
+      rowBadges = displayRows + moreCount;
+    }
+
     card.innerHTML = `
       <div class="d-flex justify-content-between align-items-start mb-2">
         <div>
@@ -479,12 +487,17 @@ function renderIssuesCards(issues) {
 
       <p class="text-muted mb-2">${escapeHtml(iss.description)}</p>
 
-      <div class="row g-2 align-items-center text-muted small">
+      <div class="row g-2 align-items-center text-muted small mb-2">
         <div class="col-auto"><b>Target Column:</b> ${escapeHtml(iss.column || "Full Dataset")}</div>
         <div class="col-auto">|</div>
         <div class="col-auto"><b>Affected Records:</b> ${iss.affected_count} (${iss.affected_pct || 0}%)</div>
         <div class="col-auto">|</div>
         <div class="col-auto"><b>Sample Problem Values:</b> ${sampleBadges || 'N/A'}</div>
+      </div>
+
+      <div class="pt-2 border-top small d-flex align-items-center flex-wrap gap-1">
+        <b class="text-dark me-1"><i class="bi bi-geo-alt-fill text-danger me-1"></i>Affected Row Numbers:</b>
+        ${rowBadges}
       </div>
     `;
     container.appendChild(card);
@@ -581,13 +594,18 @@ function renderCleaningConsole(issues) {
   }
 
   issues.forEach(iss => {
+    const affectedRows = iss.affected_rows || [];
+    const rowsSnippet = affectedRows.length > 0
+      ? `<br/><span class="text-danger fw-semibold" style="font-size:0.75rem;"><i class="bi bi-geo-alt me-1"></i>Rows: ${affectedRows.slice(0, 6).map(r => '#' + r).join(', ')}${affectedRows.length > 6 ? ' (+' + (affectedRows.length - 6) + ')' : ''}</span>`
+      : '';
+
     const tr = document.createElement("tr");
     tr.innerHTML = `
       <td><input type="checkbox" class="cleaning-checkbox" data-id="${iss.id}" checked onchange="updateCleaningSelectionCount()"></td>
-      <td><b>${escapeHtml(iss.title)}</b><br/><small class="text-muted">${escapeHtml(iss.column || "Full Dataset")}</small></td>
+      <td><b>${escapeHtml(iss.title)}</b>${rowsSnippet}<br/><small class="text-muted">${escapeHtml(iss.column || "Full Dataset")}</small></td>
       <td><span class="badge-custom ${iss.severity === 'high' ? 'badge-high' : 'badge-medium'}">${iss.severity.toUpperCase()}</span></td>
       <td><code>${iss.cleaning_rule || 'inspect'}</code></td>
-      <td>${iss.affected_count}</td>
+      <td><b>${iss.affected_count}</b></td>
       <td>
         <button class="btn btn-sm btn-outline-primary" onclick="showPreviewModal('${iss.id}')">
           <i class="bi bi-eye"></i> Preview Before/After
@@ -616,8 +634,14 @@ function showPreviewModal(issueId) {
   const issue = currentSessionData.issues.find(i => i.id === issueId);
   if (!issue) return;
 
+  const affectedList = (issue.affected_rows || []).slice(0, 10).map(r => 'Row #' + r).join(', ');
+  const moreText = (issue.affected_rows || []).length > 10 ? ` (+${issue.affected_rows.length - 10} more)` : '';
+
   document.getElementById("previewModalTitle").textContent = `Preview Fix: ${issue.title}`;
-  document.getElementById("previewModalDesc").textContent = `Transformation Rule: ${issue.cleaning_rule}. Below is a sample preview comparing original values to sanitized values.`;
+  document.getElementById("previewModalDesc").innerHTML = `
+    <div class="mb-1"><b>Transformation Rule:</b> <code>${escapeHtml(issue.cleaning_rule)}</code> &nbsp;|&nbsp; <b>Target Column:</b> <code>${escapeHtml(issue.column || "Full Dataset")}</code></div>
+    <div><b>Identified Defect Row Numbers:</b> <span class="badge bg-danger fs-6">${affectedList || 'None'}${moreText}</span></div>
+  `;
 
   const tbody = document.getElementById("previewModalTableBody");
   tbody.innerHTML = `<tr><td colspan="4" class="text-center py-3">Generating sample preview...</td></tr>`;
@@ -632,15 +656,15 @@ function showPreviewModal(issueId) {
         res.preview.preview_samples.forEach(s => {
           const tr = document.createElement("tr");
           tr.innerHTML = `
-            <td><b>#${s.row}</b></td>
-            <td>${escapeHtml(s.column)}</td>
+            <td><span class="badge bg-primary fs-6">Row #${s.row}</span></td>
+            <td><code>${escapeHtml(s.column)}</code></td>
             <td><span class="diff-del">${escapeHtml(s.before)}</span></td>
             <td><span class="diff-add">${escapeHtml(s.after)}</span></td>
           `;
           tbody.appendChild(tr);
         });
       } else {
-        tbody.innerHTML = `<tr><td colspan="4" class="text-center py-3 text-muted">No sample row changes generated or row dropped.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="4" class="text-center py-3 text-muted">No sample row changes generated or row dropped. Identified affected rows: <b>${affectedList}</b></td></tr>`;
       }
     })
     .catch(err => {

@@ -26,15 +26,19 @@ class CleaningOperations:
 
         if strategy == "median":
             num_series = pd.to_numeric(series, errors="coerce")
-            replacement = num_series.median()
+            replacement = round(float(num_series.median()), 2) if not num_series.dropna().empty else 0.0
         elif strategy == "mean":
             num_series = pd.to_numeric(series, errors="coerce")
-            replacement = num_series.mean()
+            replacement = round(float(num_series.mean()), 2) if not num_series.dropna().empty else 0.0
         elif strategy == "mode":
             mode_vals = series.dropna().mode()
             replacement = mode_vals.iloc[0] if not mode_vals.empty else "Unknown"
         else:
-            replacement = fill_value if fill_value is not None else "Unknown"
+            replacement = fill_value if fill_value is not None else ("Unknown" if not pd.api.types.is_numeric_dtype(series) else 0)
+
+        # Cast to object if trying to put a string into a numeric column
+        if pd.api.types.is_numeric_dtype(df_copy[column]) and isinstance(replacement, str):
+            df_copy[column] = df_copy[column].astype(object)
 
         df_copy.loc[mask, column] = replacement
         return df_copy, {

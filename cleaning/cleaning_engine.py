@@ -41,15 +41,33 @@ class CleaningEngine:
         # Simulate transformation on small sample
         if rule in ("impute_median", "impute_mean", "impute_mode", "fill_constant"):
             strat = "median" if "median" in rule else ("mean" if "mean" in rule else ("mode" if "mode" in rule else "constant"))
+            # Precompute replacement from full dataset df
+            full_series = df[col] if col in df.columns else target_df[col]
+            if strat == "median":
+                non_null_num = pd.to_numeric(full_series, errors="coerce").dropna()
+                rep_val = round(float(non_null_num.median()), 2) if not non_null_num.empty else 0.0
+            elif strat == "mean":
+                non_null_num = pd.to_numeric(full_series, errors="coerce").dropna()
+                rep_val = round(float(non_null_num.mean()), 2) if not non_null_num.empty else 0.0
+            elif strat == "mode":
+                modes = full_series.dropna().mode()
+                rep_val = modes.iloc[0] if not modes.empty else "Unknown"
+            else:
+                rep_val = params.get("fill_value")
+                if rep_val is None:
+                    rep_val = 0 if pd.api.types.is_numeric_dtype(full_series) else "Unknown"
+
             simulated_df, _ = CleaningOperations.impute_missing(
-                target_df, col, strategy=strat, fill_value=params.get("fill_value", "Unknown")
+                target_df, col, strategy="constant", fill_value=rep_val
             )
             for idx, row in target_df.iterrows():
                 r_num = row.get("_row_number", idx)
+                val_before = row.get(col)
+                before_str = "<MISSING / NULL>" if (pd.isna(val_before) or str(val_before).strip() == "" or str(val_before).lower() == "nan") else str(val_before)
                 preview_data.append({
                     "row": int(r_num),
                     "column": col,
-                    "before": str(row.get(col, "NULL")),
+                    "before": before_str,
                     "after": str(simulated_df.loc[idx, col])
                 })
 
