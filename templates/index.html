@@ -47,6 +47,7 @@
         <a class="nav-link" data-tab="upload">
           <i class="bi bi-cloud-arrow-up"></i>
           <span>Upload Dataset</span>
+          <span id="sidebarUploadSpinner" class="spinner-border spinner-border-sm text-info ms-auto d-none" role="status" style="width: 0.9rem; height: 0.9rem;" title="Analyzing dataset..."></span>
         </a>
       </li>
       <li class="nav-item">
@@ -259,8 +260,15 @@
         <div class="row g-4">
           <div class="col-lg-7">
             <div class="card-custom">
-              <div class="card-header-custom">
-                <h5>Upload Dataset for Autonomous Inspection</h5>
+              <div class="card-header-custom d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center">
+                  <h5 class="mb-0">Upload Dataset for Autonomous Inspection</h5>
+                  <!-- Small loading indicator near left side in upload dataset section -->
+                  <div id="uploadInlineLoader" class="d-none align-items-center text-primary ms-3">
+                    <span class="spinner-border spinner-border-sm text-primary me-2" role="status"></span>
+                    <span id="uploadInlineText" class="small fw-semibold">Analyzing dataset...</span>
+                  </div>
+                </div>
                 <span class="badge bg-info text-white">CSV, XLSX, XLS, JSON</span>
               </div>
               <div class="card-body-custom">
@@ -273,6 +281,15 @@
                   <span id="selectedFileName" class="badge bg-primary fs-6 d-none"></span>
                 </div>
 
+                <!-- Small inline loading indicator in the upload section -->
+                <div id="uploadInlineBanner" class="alert alert-info py-2 px-3 mb-3 d-none align-items-center shadow-sm">
+                  <span class="spinner-border spinner-border-sm text-info me-2 flex-shrink-0" role="status"></span>
+                  <div class="small">
+                    <strong id="uploadInlineBannerTitle">Analyzing Dataset</strong>: 
+                    <span id="uploadInlineBannerSub" class="text-muted">Running automated ingestion, type profiling, issue detection, and Gemini insights...</span>
+                  </div>
+                </div>
+
                 <!-- Business Context -->
                 <div class="mb-3">
                   <label for="userContext" class="form-label fw-semibold">Optional Business Description or Context</label>
@@ -281,7 +298,8 @@
 
                 <!-- Action Button -->
                 <button id="btnAnalyze" class="btn btn-primary-custom w-100 py-2 fs-6" disabled>
-                  <i class="bi bi-play-circle me-2"></i>Start Autonomous Analysis
+                  <span id="btnAnalyzeSpinner" class="spinner-border spinner-border-sm me-2 d-none" role="status"></span>
+                  <span id="btnAnalyzeText"><i class="bi bi-play-circle me-2"></i>Start Autonomous Analysis</span>
                 </button>
               </div>
             </div>

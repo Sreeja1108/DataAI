@@ -827,13 +827,76 @@ window.downloadArtifact = downloadArtifact;
 // ----------------- UTILITIES -----------------
 
 function showLoading(title, sub) {
-  document.getElementById("loadingTitle").textContent = title || "Processing...";
-  document.getElementById("loadingSub").textContent = sub || "Please wait...";
-  document.getElementById("loadingOverlay").style.display = "flex";
+  // Never cover the webpage with the full-screen overlay; keep the UI normal and responsive
+  const overlay = document.getElementById("loadingOverlay");
+  if (overlay) overlay.style.display = "none";
+
+  // Show small loading symbol in the upload dataset section (left side)
+  const inlineLoader = document.getElementById("uploadInlineLoader");
+  const inlineText = document.getElementById("uploadInlineText");
+  if (inlineLoader) {
+    inlineLoader.classList.remove("d-none");
+    inlineLoader.classList.add("d-flex");
+    if (inlineText) inlineText.textContent = title || "Analyzing dataset...";
+  }
+
+  const inlineBanner = document.getElementById("uploadInlineBanner");
+  const inlineTitle = document.getElementById("uploadInlineBannerTitle");
+  const inlineSub = document.getElementById("uploadInlineBannerSub");
+  if (inlineBanner) {
+    inlineBanner.classList.remove("d-none");
+    inlineBanner.classList.add("d-flex");
+    if (inlineTitle) inlineTitle.textContent = title || "Analyzing Dataset";
+    if (inlineSub) inlineSub.textContent = sub || "Running profiling, issue detection, and Gemini insights...";
+  }
+
+  // Small spinner on the left sidebar navigation
+  const sidebarSpinner = document.getElementById("sidebarUploadSpinner");
+  if (sidebarSpinner) {
+    sidebarSpinner.classList.remove("d-none");
+  }
+
+  // Small spinner on the Analyze button
+  const btnSpinner = document.getElementById("btnAnalyzeSpinner");
+  const btnText = document.getElementById("btnAnalyzeText");
+  const btnAnalyze = document.getElementById("btnAnalyze");
+  if (btnSpinner && btnText && btnAnalyze) {
+    btnSpinner.classList.remove("d-none");
+    btnText.textContent = " Analyzing...";
+    btnAnalyze.disabled = true;
+  }
 }
 
 function hideLoading() {
-  document.getElementById("loadingOverlay").style.display = "none";
+  const overlay = document.getElementById("loadingOverlay");
+  if (overlay) overlay.style.display = "none";
+
+  // Hide small loading symbols in the upload dataset section
+  const inlineLoader = document.getElementById("uploadInlineLoader");
+  if (inlineLoader) {
+    inlineLoader.classList.remove("d-flex");
+    inlineLoader.classList.add("d-none");
+  }
+
+  const inlineBanner = document.getElementById("uploadInlineBanner");
+  if (inlineBanner) {
+    inlineBanner.classList.remove("d-flex");
+    inlineBanner.classList.add("d-none");
+  }
+
+  const sidebarSpinner = document.getElementById("sidebarUploadSpinner");
+  if (sidebarSpinner) {
+    sidebarSpinner.classList.add("d-none");
+  }
+
+  const btnSpinner = document.getElementById("btnAnalyzeSpinner");
+  const btnText = document.getElementById("btnAnalyzeText");
+  const btnAnalyze = document.getElementById("btnAnalyze");
+  if (btnSpinner && btnText && btnAnalyze) {
+    btnSpinner.classList.add("d-none");
+    btnText.innerHTML = '<i class="bi bi-play-circle me-2"></i>Start Autonomous Analysis';
+    btnAnalyze.disabled = (selectedFile === null);
+  }
 }
 
 function showAlert(type, message) {
