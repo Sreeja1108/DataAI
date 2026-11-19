@@ -205,7 +205,11 @@ function uploadAndAnalyze() {
       hideLoading();
       if (res.success) {
         showAlert("success", `Dataset '${file.name}' successfully analyzed!`);
-        renderAnalysisResults(res.data);
+        try {
+          renderAnalysisResults(res.data);
+        } catch (renderErr) {
+          console.error("Error rendering results:", renderErr);
+        }
         switchTab("dashboard");
       } else {
         showAlert("danger", res.error || "Analysis failed.");
@@ -230,7 +234,11 @@ function loadSampleDataset(sampleName) {
       hideLoading();
       if (res.success) {
         showAlert("success", `Demo dataset '${sampleName}' loaded and analyzed!`);
-        renderAnalysisResults(res.data);
+        try {
+          renderAnalysisResults(res.data);
+        } catch (renderErr) {
+          console.error("Error rendering results:", renderErr);
+        }
         switchTab("dashboard");
       } else {
         showAlert("danger", res.error || "Failed to load sample dataset.");
@@ -892,10 +900,12 @@ function hideLoading() {
   const btnSpinner = document.getElementById("btnAnalyzeSpinner");
   const btnText = document.getElementById("btnAnalyzeText");
   const btnAnalyze = document.getElementById("btnAnalyze");
+  const fileInput = document.getElementById("fileInput");
   if (btnSpinner && btnText && btnAnalyze) {
     btnSpinner.classList.add("d-none");
     btnText.innerHTML = '<i class="bi bi-play-circle me-2"></i>Start Autonomous Analysis';
-    btnAnalyze.disabled = (selectedFile === null);
+    const hasFile = Boolean(fileInput && fileInput.files && fileInput.files.length > 0);
+    btnAnalyze.disabled = !hasFile;
   }
 }
 
