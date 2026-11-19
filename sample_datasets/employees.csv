@@ -1,0 +1,12 @@
+emp_id,full_name,work_email,department,hire_date,termination_date,annual_salary,performance_rating
+EMP-001,Arthur Dent,arthur.dent@galaxy.org,Engineering,2021-03-01,,95000,Exceeds Expectations
+EMP-002,Ford Prefect,ford.prefect@guide.net,Marketing,2020-05-15,,82000,Meets Expectations
+EMP-003,Trillian Astra,trillian@deepthought.com,Engineering,2019-01-10,,145000,exceeds expectations
+EMP-004,Tricia McMillan,invalid_email,Product,2022-08-20,,110000,Meets Expectations
+EMP-005,Marvin Android,marvin@paranoid.com,Operations,2023-01-01,2022-01-01,70000,Needs Improvement
+EMP-006,Zaphod Beeblebrox,president@galaxy.gov,,2018-11-05,,5500000,Outstanding
+EMP-007,Slartibartfast,coastlines@fjords.no,Design,2017-04-12,,120000,Exceeds Expectations
+EMP-008,Dirk Gently,dirk@holistic.co.uk,Legal,2024-02-14,,-45000,Meets Expectations
+EMP-002,Ford Prefect,ford.prefect@guide.net,Marketing,2020-05-15,,82000,Meets Expectations
+EMP-009,Agrajag,agrajag@incarnations.net,Research,2023-07-01,,98000,  Meets Expectations  
+EMP-010,Fenchurch,fenchurch@skies.org,Support,2022-10-10,,65000,Meets Expectations

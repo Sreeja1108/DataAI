@@ -1,0 +1,20 @@
+order_id,customer_name,customer_email,order_date,ship_date,product_category,unit_price,quantity,order_status
+ORD-1001,Alice Johnson,alice.j@example.com,2026-01-10,2026-01-12,Electronics,199.99,1,Delivered
+ORD-1002,Bob Smith ,bob.smith@company.org,2026-01-11,2026-01-13,Home & Kitchen,49.50,2,delivered
+ORD-1003,Charlie Davis,invalid-email-address,2026-01-12,2026-01-15,Electronics,899.00,1,SHIPPED
+ORD-1004,Diana Prince,diana.p@justice.net,2026-01-14,2026-01-10,Beauty,29.99,3,Delivered
+ORD-1005,Evan Wright,evan@wright.io,2026-01-15,2026-01-18,Books,-15.00,1,Delivered
+ORD-1002,Bob Smith,bob.smith@company.org,2026-01-11,2026-01-13,Home & Kitchen,49.50,2,Delivered
+ORD-1006,Fiona Gallagher,,2026-01-16,2026-01-19,Apparel,85.00,2,Processing
+ORD-1007,George Miller,george@madmax.com,2026-01-17,2026-01-20,Electronics,125000.00,1,Delivered
+ORD-1008,Hannah Abbott,hannah@hogwarts.edu,2026/01/18,2026-01-22,Books,19.99,4,  Delivered  
+ORD-1009,Ian Malcolm,ian.m@chaos.com,2026-01-19,2026-01-23,Electronics,249.99,1,delivered
+ORD-1010,Julia Roberts,julia@nottinghill.com,2026-01-20,2026-01-24,Apparel,,1,Delivered
+ORD-1011,Kevin Bacon,kevin@sixdegrees.com,2026-01-21,2026-01-25,Home & Kitchen,35.00,2,Shipped
+ORD-1011,Kevin Bacon,kevin@sixdegrees.com,2026-01-21,2026-01-25,Home & Kitchen,35.00,2,Shipped
+ORD-1012,Laura Croft,lara@tomb.org,invalid_date_str,2026-01-26,Electronics,599.99,1,Shipped
+ORD-1013,Michael Scott,michael@dundermifflin.com,2026-01-23,2026-01-27,Office Supplies,12.50,10,Delivered
+ORD-1014,Nancy Drew,nancy@mystery.net,2026-01-24,2026-01-28,Books,14.95,1,Delivered
+ORD-1015,Oscar Martinez,oscar@accounting.org,2026-01-25,2026-01-29,Office Supplies,45.00,3,Delivered
+ORD-1016,Pam Beesly,pam@dunder.com,2026-01-26,2026-01-30,Office Supplies,8.99,5,delivered
+ORD-1017,Quinn Fabray,quinn@mckinley.edu,2026-01-27,2026-01-31,Apparel,65.00,1,Shipped

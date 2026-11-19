@@ -1,0 +1,9 @@
+patient_id,full_name,age,gender,systolic_bp,contact_phone,diagnosis_code,admission_date
+PAT-501,Eleanor Vance,45,Female,120,+1-555-0192,I10,2026-01-05
+PAT-502,Luke Sanderson,-5,Male,135,555-0193,E11.9,2026-01-06
+PAT-503,Theodora Crain,32,female,118,not-a-phone-number,J45.909,2026-01-07
+PAT-504,Hugh Crain,250,Male,320,+1-555-0195,I25.10,2026-01-08
+PAT-505,Nell Crain,,Female,115,+1-555-0196,,2026-01-09
+PAT-506,Steven Crain,42,Male,128,+1-555-0197,K21.9,2026-01-10
+PAT-501,Eleanor Vance,45,Female,120,+1-555-0192,I10,2026-01-05
+PAT-507,Shirley Crain,39,Female,122,+1-555-0198,M54.5,2026-01-11

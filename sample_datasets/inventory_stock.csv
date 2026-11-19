@@ -1,0 +1,8 @@
+sku_code,item_name,warehouse_zone,units_in_stock,reorder_point,unit_cost,unit_retail_price
+SKU-001,Wireless Ergonomic Mouse,Zone A,150,30,12.50,29.99
+SKU-002,Mechanical Keyboard,Zone B,-10,25,45.00,89.99
+SKU-003,4K Ultra HD Monitor,zone a,45,10,180.00,299.99
+SKU-004,USB-C Hub Multiport,Zone C,,50,15.00,34.99
+SKU-005,Noise Cancelling Headphones,Zone A,80,20,65.00,49.99
+SKU-006,Desk Mat Extended,Zone B,300,40,5.00,19.99
+SKU-001,Wireless Ergonomic Mouse,Zone A,150,30,12.50,29.99
