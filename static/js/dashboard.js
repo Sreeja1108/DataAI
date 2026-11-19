@@ -27,25 +27,10 @@ function initNavigation() {
     });
   });
 
-  const btnQuick = document.getElementById("btnQuickUpload");
-  if (btnQuick) {
-    btnQuick.addEventListener("click", () => switchTab("upload"));
-  }
+  document.getElementById("btnQuickUpload").addEventListener("click", () => switchTab("upload"));
 }
 
 function switchTab(tabName) {
-  // Map anomalies shortcut
-  if (tabName === "anomalies") {
-    tabName = "issues";
-    setTimeout(() => {
-      const filter = document.getElementById("issueCategoryFilter");
-      if (filter) {
-        filter.value = "anomaly";
-        filterIssuesList();
-      }
-    }, 50);
-  }
-
   // Update sidebar active class
   document.querySelectorAll(".sidebar-nav .nav-link").forEach(link => {
     if (link.getAttribute("data-tab") === tabName) {
@@ -63,6 +48,19 @@ function switchTab(tabName) {
   if (target) {
     target.classList.remove("d-none");
   }
+
+  // Update Page Title
+  const titles = {
+    "dashboard": "Dashboard Overview",
+    "upload": "Upload Dataset for Inspection",
+    "profile": "Dataset Profile & Type Inference",
+    "quality": "Data Quality Scoring Overview",
+    "issues": "Detected Quality Issues & Anomalies",
+    "ai-insights": "Gemini AI Dataset Insights",
+    "cleaning": "Interactive Data Cleaning Console",
+    "reports": "Audit Reports & Cleaned Data Export"
+  };
+  document.getElementById("pageTitle").textContent = titles[tabName] || "Dashboard";
 }
 
 // ----------------- HEALTH & SESSIONS -----------------
@@ -71,18 +69,19 @@ function checkHealth() {
   fetch("/api/health")
     .then(r => r.json())
     .then(data => {
-      const modelText = document.getElementById("geminiModelText");
-      if (modelText) {
-        if (data.gemini_connected) {
-          modelText.textContent = "Gemini 3.5 Active";
-        } else {
-          modelText.textContent = "Heuristic Mode";
-        }
+      const dot = document.getElementById("geminiStatusDot");
+      if (data.gemini_connected) {
+        dot.textContent = "Online (" + data.gemini_model.replace("models/", "") + ")";
+        dot.className = "badge bg-success";
+      } else {
+        dot.textContent = "Heuristic Mode";
+        dot.className = "badge bg-warning text-dark";
       }
     })
     .catch(() => {
-      const modelText = document.getElementById("geminiModelText");
-      if (modelText) modelText.textContent = "Heuristic Mode";
+      const dot = document.getElementById("geminiStatusDot");
+      dot.textContent = "Offline";
+      dot.className = "badge bg-danger";
     });
 }
 
@@ -172,15 +171,9 @@ function initUpload() {
   function handleFileSelected() {
     if (fileInput.files.length > 0) {
       const file = fileInput.files[0];
-      const stagedName = document.getElementById("stagedFileName");
-      if (stagedName) stagedName.textContent = file.name;
-      const stagedMeta = document.getElementById("stagedFileMeta");
-      if (stagedMeta) stagedMeta.textContent = `${(file.size / 1024).toFixed(1)} KB • File ready for quality scan`;
-      const stagedBadge = document.getElementById("stagedFileStatusBadge");
-      if (stagedBadge) {
-        stagedBadge.textContent = "Ready for Analysis";
-        stagedBadge.className = "pill-badge ready";
-      }
+      selectedFileName.textContent = `${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
+      selectedFileName.classList.remove("d-none");
+      btnAnalyze.disabled = false;
     }
   }
 
@@ -192,9 +185,7 @@ function uploadAndAnalyze() {
   const userContext = document.getElementById("userContext").value.trim();
 
   if (!fileInput.files || fileInput.files.length === 0) {
-    const stagedName = document.getElementById("stagedFileName");
-    const sample = (stagedName && stagedName.textContent.includes(".csv")) ? stagedName.textContent.trim() : "online_store_orders.csv";
-    loadSampleDataset(sample);
+    showAlert("warning", "Please select a file to upload.");
     return;
   }
 
@@ -256,58 +247,20 @@ function loadSampleDataset(sampleName) {
 function renderAnalysisResults(data) {
   currentSessionData = data;
 
+  // Active dataset badge
+  const badge = document.getElementById("activeDatasetBadge");
+  badge.classList.remove("d-none");
+  document.getElementById("activeDatasetName").textContent = data.filename;
+
+  // Export button on top
+  document.getElementById("btnExportTop").classList.remove("d-none");
+  document.getElementById("btnExportTop").onclick = () => switchTab("reports");
+
   const overview = data.overview || {};
   const scores = data.scores || {};
   const issues = data.issues || [];
   const confirmedIssues = issues.filter(i => !i.is_anomaly_only);
   const anomalies = issues.filter(i => i.is_anomaly_only);
-
-  // Update Top Navbar & Sidebar Active File Badges (Matching Screenshot)
-  const filename = data.filename || "online_store_orders.csv";
-  const rows = overview.row_count || 0;
-  const cols = overview.column_count || 0;
-
-  const topName = document.getElementById("topActiveDatasetName");
-  if (topName) topName.textContent = `${filename} (${rows} rows)`;
-
-  const sideName = document.getElementById("sidebarFileName");
-  if (sideName) sideName.textContent = filename;
-
-  const sideMeta = document.getElementById("sidebarFileMeta");
-  if (sideMeta) sideMeta.textContent = `${rows} rows • ${cols} columns`;
-
-  const sideBadge = document.getElementById("sidebarFileBadge");
-  if (sideBadge) {
-    sideBadge.textContent = "Scanned";
-    sideBadge.className = "pill-badge ready";
-  }
-
-  const stagedName = document.getElementById("stagedFileName");
-  if (stagedName) stagedName.textContent = filename;
-
-  const stagedMeta = document.getElementById("stagedFileMeta");
-  if (stagedMeta) stagedMeta.textContent = `${rows} total rows • ${cols} columns detected`;
-
-  const stagedBadge = document.getElementById("stagedFileStatusBadge");
-  if (stagedBadge) {
-    stagedBadge.textContent = "Ready for Analysis";
-    stagedBadge.className = "pill-badge ready";
-  }
-
-  // Active dataset badge legacy fallback
-  const badge = document.getElementById("activeDatasetBadge");
-  if (badge) {
-    badge.classList.remove("d-none");
-    const el = document.getElementById("activeDatasetName");
-    if (el) el.textContent = data.filename;
-  }
-
-  // Export button on top
-  const btnExport = document.getElementById("btnExportTop");
-  if (btnExport) {
-    btnExport.classList.remove("d-none");
-    btnExport.onclick = () => switchTab("reports");
-  }
 
   // 1. KPIs
   document.getElementById("kpiScore").textContent = `${scores.overall_score || 0}%`;

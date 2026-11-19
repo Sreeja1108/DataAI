@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>DataGuard AI – Clean Data. Confident Decisions.</title>
+  <title>DataGuard AI – Autonomous Data Quality & Anomaly Detection Agent</title>
   <!-- Bootstrap 5 CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <!-- Bootstrap Icons -->
@@ -28,151 +28,96 @@
 
   <!-- Sidebar -->
   <aside class="sidebar">
-    <!-- Brand / Logo -->
     <div class="sidebar-brand">
-      <div class="brand-icon">
-        <i class="bi bi-shield-check"></i>
-      </div>
-      <div class="brand-text">
-        <h4>DataGuard AI</h4>
-        <small>Clean Data. Confident Decisions.</small>
+      <i class="bi bi-shield-check fs-2 text-info"></i>
+      <div>
+        <h4>DataGuard <span>AI</span></h4>
+        <small class="text-secondary" style="font-size: 0.72rem;">Quality & Anomaly Agent</small>
       </div>
     </div>
 
-    <!-- Navigation List -->
     <ul class="sidebar-nav">
       <li class="nav-item">
-        <a class="nav-link" data-tab="dashboard">
-          <i class="bi bi-house-door"></i>
-          <span>Landing Page</span>
+        <a class="nav-link active" data-tab="dashboard">
+          <i class="bi bi-speedometer2"></i>
+          <span>Dashboard</span>
         </a>
       </li>
-
-      <li class="nav-section-title">ANALYTICS & ENGINE</li>
-
       <li class="nav-item">
-        <a class="nav-link" data-tab="dashboard">
-          <i class="bi bi-grid"></i>
-          <span>Overview</span>
-        </a>
-      </li>
-
-      <li class="nav-item">
-        <a class="nav-link active" data-tab="upload">
+        <a class="nav-link" data-tab="upload">
           <i class="bi bi-cloud-arrow-up"></i>
           <span>Upload Dataset</span>
         </a>
       </li>
-
       <li class="nav-item">
         <a class="nav-link" data-tab="profile">
-          <i class="bi bi-layout-three-columns"></i>
-          <span>Data Profiling</span>
+          <i class="bi bi-file-earmark-bar-graph"></i>
+          <span>Dataset Profile</span>
         </a>
       </li>
-
-      <li class="nav-item">
-        <a class="nav-link" data-tab="anomalies">
-          <i class="bi bi-exclamation-triangle"></i>
-          <span>Anomaly Detection</span>
-        </a>
-      </li>
-
-      <li class="nav-item">
-        <a class="nav-link" data-tab="issues">
-          <i class="bi bi-search"></i>
-          <span>Issues Explorer</span>
-          <span id="sidebarIssuesBadge" class="badge bg-danger ms-auto d-none" style="font-size: 0.65rem;">0</span>
-        </a>
-      </li>
-
-      <li class="nav-item">
-        <a class="nav-link" data-tab="ai-insights">
-          <i class="bi bi-stars"></i>
-          <span>AI Recommendations</span>
-        </a>
-      </li>
-
       <li class="nav-item">
         <a class="nav-link" data-tab="quality">
-          <i class="bi bi-award"></i>
-          <span>Quality Score</span>
-          <span class="nav-indicator-dot"></span>
+          <i class="bi bi-patch-check"></i>
+          <span>Quality Overview</span>
         </a>
       </li>
-
+      <li class="nav-item">
+        <a class="nav-link" data-tab="issues">
+          <i class="bi bi-exclamation-triangle"></i>
+          <span>Issues & Anomalies</span>
+          <span id="sidebarIssuesBadge" class="badge bg-danger ms-auto d-none">0</span>
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" data-tab="ai-insights">
+          <i class="bi bi-cpu"></i>
+          <span>AI Insights</span>
+        </a>
+      </li>
       <li class="nav-item">
         <a class="nav-link" data-tab="cleaning">
           <i class="bi bi-magic"></i>
-          <span>Cleaning Pipeline</span>
+          <span>Data Cleaning</span>
         </a>
       </li>
-
       <li class="nav-item">
         <a class="nav-link" data-tab="reports">
           <i class="bi bi-file-earmark-text"></i>
-          <span>Reports & Export</span>
-        </a>
-      </li>
-
-      <li class="nav-item">
-        <a class="nav-link" data-tab="history">
-          <i class="bi bi-clock-history"></i>
-          <span>Scan History</span>
-        </a>
-      </li>
-
-      <li class="nav-item">
-        <a class="nav-link" data-tab="settings">
-          <i class="bi bi-gear"></i>
-          <span>Settings</span>
+          <span>Reports & Exports</span>
         </a>
       </li>
     </ul>
 
-    <!-- Sidebar Bottom Widget: Current File -->
-    <div class="sidebar-footer-widget">
-      <div class="d-flex align-items-center justify-content-between mb-1">
-        <span class="current-file-label">CURRENT FILE</span>
-        <span id="sidebarFileBadge" class="pill-badge ready">Ready</span>
+    <div class="sidebar-footer">
+      <div class="d-flex align-items-center justify-content-between mb-2">
+        <span class="small">Engine: <b>Python 3.12</b></span>
+        <span class="badge bg-success" style="font-size: 0.65rem;">Active</span>
       </div>
-      <div id="sidebarFileName" class="current-file-name">online_store_orders.csv</div>
-      <div id="sidebarFileMeta" class="current-file-meta">500 rows • 13 columns</div>
+      <div class="d-flex align-items-center justify-content-between">
+        <span class="small">AI: <b>Gemini Flash</b></span>
+        <span id="geminiStatusDot" class="badge bg-primary" style="font-size: 0.65rem;">Online</span>
+      </div>
     </div>
   </aside>
 
   <!-- Main Content Wrapper -->
   <div class="main-wrapper">
-    <!-- Top Navbar (Matching User Reference Image) -->
+    <!-- Top Navbar -->
     <header class="top-navbar">
-      <div class="active-dataset-control">
-        <span class="active-dataset-label">ACTIVE DATASET:</span>
-        <div class="active-dataset-pill" onclick="switchTab('upload')">
-          <span id="topActiveDatasetName">online_store_orders.csv (500 rows)</span>
-          <i class="bi bi-chevron-down text-muted" style="font-size: 0.7rem;"></i>
-        </div>
+      <div class="d-flex align-items-center gap-3">
+        <h5 class="mb-0 fw-bold text-primary" id="pageTitle">Dashboard Overview</h5>
+        <span id="activeDatasetBadge" class="badge bg-light text-dark border d-none">
+          <i class="bi bi-database me-1 text-primary"></i> <span id="activeDatasetName">None</span>
+        </span>
       </div>
 
-      <div class="header-actions">
-        <!-- Gemini Model Pill -->
-        <div id="geminiPillBadge" class="gemini-pill">
-          <i class="bi bi-stars"></i>
-          <span id="geminiModelText">Gemini 3.5 Active</span>
-        </div>
-
-        <!-- Theme Toggle Icon -->
-        <button class="theme-toggle-btn" title="Toggle Theme" onclick="toggleThemeMode()">
-          <i class="bi bi-moon"></i>
+      <div class="d-flex align-items-center gap-2">
+        <button id="btnQuickUpload" class="btn btn-outline-primary btn-sm">
+          <i class="bi bi-cloud-upload me-1"></i> New Dataset
         </button>
-
-        <!-- User Profile Avatar -->
-        <div class="user-profile-badge">
-          <div class="user-avatar">DG</div>
-          <div class="user-info-text">
-            <div class="name">DataGuard Pro</div>
-            <div class="role">Enterprise Edition</div>
-          </div>
-        </div>
+        <button id="btnExportTop" class="btn btn-primary-custom btn-sm d-none">
+          <i class="bi bi-download me-1"></i> Export Reports
+        </button>
       </div>
     </header>
 
@@ -182,96 +127,22 @@
       <!-- Alert Notification Container -->
       <div id="alertContainer"></div>
 
-      <!-- ================= SECTION: UPLOAD DATASET (Matches User Reference Image) ================= -->
-      <div id="section-upload" class="content-section">
-        <h2 class="page-header-title">Dataset Ingestion & Validation</h2>
-        <p class="page-header-desc">Upload any CSV, Excel, or JSON dataset. DataGuard AI will validate format, inspect columns, and prepare automated profiling.</p>
-
-        <!-- Main Upload Dropzone Box -->
-        <div id="dropzone" class="dropzone-container mb-4">
-          <div class="dropzone-icon-box">
-            <i class="bi bi-cloud-arrow-up"></i>
-          </div>
-          <h4 class="dropzone-title">Click to Browse or Drag & Drop CSV</h4>
-          <p class="dropzone-subtitle">Supports UTF-8, Latin-1, Excel-exported CSV, XLSX, and JSON files up to 32MB.</p>
-          <p class="dropzone-helper">Max ~500,000 rows supported • Automatic schema & delimiter inference</p>
-          <input type="file" id="fileInput" class="d-none" accept=".csv, .xlsx, .xls, .json">
-        </div>
-
-        <!-- Staged File Action Card (Shows selected file and "Run Full Quality Scan" button) -->
-        <div class="staged-file-card mb-4">
-          <div class="staged-file-left">
-            <i class="bi bi-file-earmark-text staged-file-icon"></i>
+      <!-- ================= SECTION 1: DASHBOARD ================= -->
+      <div id="section-dashboard" class="content-section">
+        <!-- Hero Welcome -->
+        <div class="card-custom bg-white p-4 mb-4 border-start border-4 border-primary">
+          <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
             <div>
-              <div class="staged-file-title">
-                <span id="stagedFileName">online_store_orders.csv</span>
-                <span id="stagedFileStatusBadge" class="pill-badge ready">Ready for Analysis</span>
-              </div>
-              <div id="stagedFileMeta" class="staged-file-meta">500 total rows • 13 columns detected</div>
+              <h4 class="fw-bold text-primary mb-1">Autonomous Data Quality & Anomaly Detection Agent</h4>
+              <p class="text-muted mb-0">Upload any structured tabular dataset (CSV, Excel, JSON). DataGuard AI profiles data, detects defects deterministically, scores quality, and formulates AI cleaning strategies.</p>
             </div>
-          </div>
-
-          <button id="btnAnalyze" class="btn-scan-action">
-            <i class="bi bi-play-fill fs-5"></i> Run Full Quality Scan
-          </button>
-        </div>
-
-        <!-- Optional Business Context Expandable -->
-        <div class="card-custom mb-4">
-          <div class="card-header-custom py-2" style="cursor: pointer;" onclick="document.getElementById('contextCollapse').classList.toggle('d-none')">
-            <span class="small fw-semibold text-muted"><i class="bi bi-chat-left-text me-2"></i>Optional Business Description / Domain Context (Click to Expand)</span>
-            <i class="bi bi-chevron-down text-muted small"></i>
-          </div>
-          <div id="contextCollapse" class="card-body-custom pt-3 d-none">
-            <textarea id="userContext" class="form-control" rows="2" placeholder="Optional business context (e.g. 'Customer transactions from North America region'). DataGuard AI will tailor its Gemini validation plan accordingly."></textarea>
+            <button class="btn btn-primary-custom px-4" onclick="switchTab('upload')">
+              <i class="bi bi-upload me-2"></i>Analyze A Dataset
+            </button>
           </div>
         </div>
 
-        <!-- Pre-built Demo Datasets (Instant Load) -->
-        <div class="card-custom">
-          <div class="card-header-custom">
-            <h5>Quick Load Demonstration Datasets</h5>
-            <span class="pill-badge active">Instant 1-Click Test</span>
-          </div>
-          <div class="card-body-custom">
-            <p class="small text-muted mb-3">Test DataGuard AI across diverse enterprise domains without uploading local files:</p>
-            <div class="row g-2">
-              <div class="col-md-4">
-                <button type="button" class="btn btn-outline-secondary btn-sm w-100 text-start p-2" onclick="loadSampleDataset('online_store_orders.csv')">
-                  <b>🛒 Online Store Orders</b><br/><small class="text-muted">E-Commerce (Duplicates, casing, outliers)</small>
-                </button>
-              </div>
-              <div class="col-md-4">
-                <button type="button" class="btn btn-outline-secondary btn-sm w-100 text-start p-2" onclick="loadSampleDataset('employees.csv')">
-                  <b>👥 HR Workforce Records</b><br/><small class="text-muted">Human Resources (Salaries, dates)</small>
-                </button>
-              </div>
-              <div class="col-md-4">
-                <button type="button" class="btn btn-outline-secondary btn-sm w-100 text-start p-2" onclick="loadSampleDataset('financial_transactions.csv')">
-                  <b>💳 Banking Ledger</b><br/><small class="text-muted">Finance (Amounts, timestamps, IDs)</small>
-                </button>
-              </div>
-              <div class="col-md-6 mt-2">
-                <button type="button" class="btn btn-outline-secondary btn-sm w-100 text-start p-2" onclick="loadSampleDataset('healthcare_patients.csv')">
-                  <b>🏥 Healthcare Patients</b><br/><small class="text-muted">Clinical Vitals (Ages, phone, BP anomalies)</small>
-                </button>
-              </div>
-              <div class="col-md-6 mt-2">
-                <button type="button" class="btn btn-outline-secondary btn-sm w-100 text-start p-2" onclick="loadSampleDataset('inventory_stock.csv')">
-                  <b>📦 Inventory Supply Chain</b><br/><small class="text-muted">Warehouse (Units, cost vs retail prices)</small>
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- ================= SECTION: OVERVIEW / DASHBOARD ================= -->
-      <div id="section-dashboard" class="content-section d-none">
-        <h2 class="page-header-title">Analytics & Quality Overview</h2>
-        <p class="page-header-desc">Real-time health score, dimensional breakdown, and aggregate diagnostics for the active dataset.</p>
-
-        <!-- KPI Cards -->
+        <!-- Metric KPI Cards -->
         <div class="row g-3 mb-4">
           <div class="col-md-3">
             <div class="stat-card">
@@ -304,20 +175,20 @@
             <div class="stat-card">
               <div class="stat-icon danger"><i class="bi bi-lightning-charge"></i></div>
               <div class="stat-content">
-                <h6>Statistical Anomalies</h6>
+                <h6>Potential Anomalies</h6>
                 <h3 id="kpiAnomalies">--</h3>
               </div>
             </div>
           </div>
         </div>
 
-        <!-- Charts -->
+        <!-- Dashboard Charts and Overview -->
         <div class="row g-4 mb-4">
           <div class="col-lg-5">
             <div class="card-custom h-100">
               <div class="card-header-custom">
                 <h5>Overall Quality Dimensions</h5>
-                <span class="pill-badge active">Formula-Based</span>
+                <span class="badge bg-light text-primary border" style="font-size: 0.75rem;">Formula-Based</span>
               </div>
               <div class="card-body-custom text-center">
                 <div class="score-circle-wrapper mb-3">
@@ -327,7 +198,7 @@
                     <span id="donutRatingText">Health</span>
                   </div>
                 </div>
-                <div class="row g-2 text-start mt-2">
+                <div class="row g-2 text-start mt-2" id="dimensionScoresList">
                   <div class="col-6"><small class="text-muted">Completeness (25%):</small> <b id="dimCompVal">--%</b></div>
                   <div class="col-6"><small class="text-muted">Uniqueness (20%):</small> <b id="dimUniqVal">--%</b></div>
                   <div class="col-6"><small class="text-muted">Validity (30%):</small> <b id="dimValVal">--%</b></div>
@@ -341,7 +212,7 @@
             <div class="card-custom h-100">
               <div class="card-header-custom">
                 <h5>Column Quality Health Distribution</h5>
-                <small class="text-muted">Score per column</small>
+                <small class="text-muted">Overall score per column</small>
               </div>
               <div class="card-body-custom">
                 <div style="height: 250px;">
@@ -351,14 +222,135 @@
             </div>
           </div>
         </div>
+
+        <!-- Recent Sessions Table -->
+        <div class="card-custom">
+          <div class="card-header-custom">
+            <h5>Recent Dataset Sessions</h5>
+            <button class="btn btn-sm btn-outline-secondary" onclick="refreshRecentSessions()"><i class="bi bi-arrow-clockwise"></i> Refresh</button>
+          </div>
+          <div class="card-body-custom p-0">
+            <div class="table-responsive">
+              <table class="table table-custom">
+                <thead>
+                  <tr>
+                    <th>Dataset Filename</th>
+                    <th>Analyzed At</th>
+                    <th>Records</th>
+                    <th>Columns</th>
+                    <th>Quality Score</th>
+                    <th>Health Rating</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="recentSessionsTableBody">
+                  <tr>
+                    <td colspan="7" class="text-center py-4 text-muted">No analysis sessions yet. Upload a dataset or load a demo sample below!</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <!-- ================= SECTION: DATA PROFILING ================= -->
-      <div id="section-profile" class="content-section d-none">
-        <h2 class="page-header-title">Data Profiling & Schema Inference</h2>
-        <p class="page-header-desc">Automatic inference of physical dtypes, semantic roles, null statistics, distinct counts, and frequency distributions.</p>
+      <!-- ================= SECTION 2: UPLOAD DATASET ================= -->
+      <div id="section-upload" class="content-section d-none">
+        <div class="row g-4">
+          <div class="col-lg-7">
+            <div class="card-custom">
+              <div class="card-header-custom">
+                <h5>Upload Dataset for Autonomous Inspection</h5>
+                <span class="badge bg-info text-white">CSV, XLSX, XLS, JSON</span>
+              </div>
+              <div class="card-body-custom">
+                <!-- Dropzone -->
+                <div id="dropzone" class="dropzone-container mb-3">
+                  <i class="bi bi-cloud-arrow-up-fill dropzone-icon"></i>
+                  <h5 class="fw-bold text-primary mb-1">Drag and drop dataset file here</h5>
+                  <p class="text-muted small mb-3">or click to browse your local computer (Max size 32 MB)</p>
+                  <input type="file" id="fileInput" class="d-none" accept=".csv, .xlsx, .xls, .json">
+                  <span id="selectedFileName" class="badge bg-primary fs-6 d-none"></span>
+                </div>
 
-        <div class="card-custom">
+                <!-- Business Context -->
+                <div class="mb-3">
+                  <label for="userContext" class="form-label fw-semibold">Optional Business Description or Context</label>
+                  <textarea id="userContext" class="form-control" rows="3" placeholder="Provide extra business hints (e.g., 'Q1 global sales transactions from European division' or 'Clinical trial telemetry'). DataGuard AI adapts its validation logic automatically."></textarea>
+                </div>
+
+                <!-- Action Button -->
+                <button id="btnAnalyze" class="btn btn-primary-custom w-100 py-2 fs-6" disabled>
+                  <i class="bi bi-play-circle me-2"></i>Start Autonomous Analysis
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Pre-built Sample Datasets for Instant Demo -->
+          <div class="col-lg-5">
+            <div class="card-custom">
+              <div class="card-header-custom">
+                <h5>Quick Load Demonstration Datasets</h5>
+                <span class="badge bg-secondary">Pre-built</span>
+              </div>
+              <div class="card-body-custom">
+                <p class="small text-muted mb-3">Test DataGuard AI across different enterprise domains without looking for external files:</p>
+
+                <div class="list-group">
+                  <button type="button" class="list-group-item list-group-item-action py-3 d-flex justify-content-between align-items-center" onclick="loadSampleDataset('online_store_orders.csv')">
+                    <div>
+                      <h6 class="mb-1 text-primary fw-bold"><i class="bi bi-cart me-2"></i>Online Store Orders (Default Demo)</h6>
+                      <small class="text-muted">E-commerce: duplicate IDs, invalid emails, negative prices, casing issues</small>
+                    </div>
+                    <span class="badge bg-primary rounded-pill">Load</span>
+                  </button>
+
+                  <button type="button" class="list-group-item list-group-item-action py-3 d-flex justify-content-between align-items-center" onclick="loadSampleDataset('employees.csv')">
+                    <div>
+                      <h6 class="mb-1 text-primary fw-bold"><i class="bi bi-people me-2"></i>Human Resources Workforce</h6>
+                      <small class="text-muted">HR: salary outliers, missing departments, temporal hire/termination inversions</small>
+                    </div>
+                    <span class="badge bg-primary rounded-pill">Load</span>
+                  </button>
+
+                  <button type="button" class="list-group-item list-group-item-action py-3 d-flex justify-content-between align-items-center" onclick="loadSampleDataset('financial_transactions.csv')">
+                    <div>
+                      <h6 class="mb-1 text-primary fw-bold"><i class="bi bi-currency-dollar me-2"></i>Banking Ledger & Transactions</h6>
+                      <small class="text-muted">Finance: negative amounts, duplicate transaction IDs, unparseable dates</small>
+                    </div>
+                    <span class="badge bg-primary rounded-pill">Load</span>
+                  </button>
+
+                  <button type="button" class="list-group-item list-group-item-action py-3 d-flex justify-content-between align-items-center" onclick="loadSampleDataset('healthcare_patients.csv')">
+                    <div>
+                      <h6 class="mb-1 text-primary fw-bold"><i class="bi bi-heart-pulse me-2"></i>Healthcare Patient Records</h6>
+                      <small class="text-muted">Clinical: impossible ages, blood pressure outliers, missing diagnosis codes</small>
+                    </div>
+                    <span class="badge bg-primary rounded-pill">Load</span>
+                  </button>
+
+                  <button type="button" class="list-group-item list-group-item-action py-3 d-flex justify-content-between align-items-center" onclick="loadSampleDataset('inventory_stock.csv')">
+                    <div>
+                      <h6 class="mb-1 text-primary fw-bold"><i class="bi bi-boxes me-2"></i>Warehouse Inventory Stock</h6>
+                      <small class="text-muted">Supply chain: negative stock counts, cost > retail price violations</small>
+                    </div>
+                    <span class="badge bg-primary rounded-pill">Load</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ================= SECTION 3: DATASET PROFILE ================= -->
+      <div id="section-profile" class="content-section d-none">
+        <div class="card-custom mb-4">
+          <div class="card-header-custom">
+            <h5>Structural & Inferred Type Profiling</h5>
+            <small id="profileOverviewText" class="text-muted">Profiling summary</small>
+          </div>
           <div class="card-body-custom p-0">
             <div class="table-responsive">
               <table class="table table-custom mb-0">
@@ -382,49 +374,60 @@
         </div>
       </div>
 
-      <!-- ================= SECTION: QUALITY SCORE ================= -->
+      <!-- ================= SECTION 4: DATA QUALITY OVERVIEW ================= -->
       <div id="section-quality" class="content-section d-none">
-        <h2 class="page-header-title">Quality Scoring Breakdown</h2>
-        <p class="page-header-desc">Deterministic 25/20/30/25 multi-dimensional scoring formula with column-level health ratings.</p>
+        <div class="card-custom mb-4 p-4">
+          <h4 class="fw-bold text-primary mb-2">Quality Scoring Methodology & Formula</h4>
+          <p class="text-muted mb-3">
+            DataGuard AI calculates overall dataset quality deterministically from applicable checks across four standardized dimensions:
+          </p>
+          <div class="p-3 bg-light rounded border text-monospace text-primary fw-bold mb-3">
+            Overall Quality Score = 25% Completeness + 20% Uniqueness + 30% Validity + 25% Consistency
+          </div>
+          <p class="small text-muted mb-0">
+            * Statistical anomaly observations are isolated and not penalized as confirmed errors. Non-applicable checks are not penalized. Records affected by multiple checks within a dimension are deduplicated to prevent double-penalization.
+          </p>
+        </div>
 
         <div class="row g-4 mb-4">
           <div class="col-md-3">
             <div class="card-custom p-3 border-top border-4 border-primary text-center">
-              <h6 class="text-muted small">Completeness (25%)</h6>
+              <h6 class="text-muted">Completeness (25%)</h6>
               <h2 id="cardCompVal" class="text-primary fw-bold">--%</h2>
               <small class="text-muted">Evaluates nulls & empty strings</small>
             </div>
           </div>
           <div class="col-md-3">
             <div class="card-custom p-3 border-top border-4 border-info text-center">
-              <h6 class="text-muted small">Uniqueness (20%)</h6>
+              <h6 class="text-muted">Uniqueness (20%)</h6>
               <h2 id="cardUniqVal" class="text-info fw-bold">--%</h2>
               <small class="text-muted">Evaluates duplicate rows & key IDs</small>
             </div>
           </div>
           <div class="col-md-3">
             <div class="card-custom p-3 border-top border-4 border-success text-center">
-              <h6 class="text-muted small">Validity (30%)</h6>
+              <h6 class="text-muted">Validity (30%)</h6>
               <h2 id="cardValVal" class="text-success fw-bold">--%</h2>
               <small class="text-muted">Evaluates formats, bounds & types</small>
             </div>
           </div>
           <div class="col-md-3">
             <div class="card-custom p-3 border-top border-4 border-warning text-center">
-              <h6 class="text-muted small">Consistency (25%)</h6>
+              <h6 class="text-muted">Consistency (25%)</h6>
               <h2 id="cardConsVal" class="text-warning fw-bold">--%</h2>
               <small class="text-muted">Evaluates whitespace & casing</small>
             </div>
           </div>
         </div>
 
+        <!-- Column Scores Table -->
         <div class="card-custom">
           <div class="card-header-custom">
             <h5>Column-Level Quality Scorecards</h5>
           </div>
           <div class="card-body-custom p-0">
             <div class="table-responsive">
-              <table class="table table-custom mb-0">
+              <table class="table table-custom">
                 <thead>
                   <tr>
                     <th>Column Name</th>
@@ -445,11 +448,8 @@
         </div>
       </div>
 
-      <!-- ================= SECTION: ISSUES EXPLORER & ANOMALY DETECTION ================= -->
+      <!-- ================= SECTION 5: ISSUES & ANOMALIES ================= -->
       <div id="section-issues" class="content-section d-none">
-        <h2 class="page-header-title">Issues Explorer & Diagnostics</h2>
-        <p class="page-header-desc">Detailed inspection of confirmed quality defects and statistical anomalies, with exact affected row numbers.</p>
-
         <!-- Filters -->
         <div class="card-custom p-3 mb-3">
           <div class="row g-2 align-items-center">
@@ -474,12 +474,12 @@
               </select>
             </div>
             <div class="col-md-4 text-end pt-3">
-              <span id="issuesCountStatus" class="pill-badge active p-2">Showing 0 Issues</span>
+              <span id="issuesCountStatus" class="badge bg-light text-dark border p-2">Showing 0 Issues</span>
             </div>
           </div>
         </div>
 
-        <!-- Issue Cards Container -->
+        <!-- Issues Cards Container -->
         <div id="issuesContainer">
           <div class="text-center py-5 text-muted">
             <i class="bi bi-check2-circle fs-1 text-success mb-2"></i>
@@ -489,32 +489,22 @@
         </div>
       </div>
 
-      <!-- ANOMALY DETECTION TAB (Shortcut filter to anomaly only) -->
-      <div id="section-anomalies" class="content-section d-none">
-        <h2 class="page-header-title">Statistical Anomaly Detection</h2>
-        <p class="page-header-desc">Extreme numerical measurements detected via IQR fences and modified Z-scores, isolated from confirmed errors.</p>
-        <div id="anomaliesContainer"></div>
-      </div>
-
-      <!-- ================= SECTION: AI RECOMMENDATIONS ================= -->
+      <!-- ================= SECTION 6: AI INSIGHTS ================= -->
       <div id="section-ai-insights" class="content-section d-none">
-        <h2 class="page-header-title">AI Recommendations & Domain Insights</h2>
-        <p class="page-header-desc">Powered by Google Gemini: domain inference, semantic column meaning, and adaptive validation checks.</p>
-
         <div class="row g-4 mb-4">
           <div class="col-lg-6">
             <div class="card-custom h-100">
               <div class="card-header-custom">
-                <h5><i class="bi bi-robot text-primary me-2"></i>Inferred Domain Understanding</h5>
+                <h5><i class="bi bi-robot text-primary me-2"></i>AI Inferred Domain Understanding</h5>
               </div>
               <div class="card-body-custom">
                 <div class="d-flex align-items-center gap-2 mb-3">
                   <h4 id="aiDomainName" class="text-primary fw-bold mb-0">Inferring...</h4>
-                  <span id="aiDomainConfidence" class="pill-badge ready">Confidence: 90%</span>
+                  <span id="aiDomainConfidence" class="badge bg-success">Confidence: 90%</span>
                 </div>
                 <p id="aiDomainDesc" class="text-muted">Domain description will appear here after analysis.</p>
-
-                <h6 class="fw-bold mt-4 mb-2 small text-uppercase">Inferred Column Roles:</h6>
+                
+                <h6 class="fw-bold mt-4 mb-2">Inferred Column Roles:</h6>
                 <div id="aiColumnRolesList" class="small text-muted" style="max-height: 250px; overflow-y: auto;">
                   No columns mapped yet.
                 </div>
@@ -528,7 +518,7 @@
                 <h5><i class="bi bi-signpost-split text-info me-2"></i>Adaptive Validation Planning</h5>
               </div>
               <div class="card-body-custom">
-                <p id="aiPlanSummary" class="text-muted small">Dynamic checks recommended based on the actual dataset profile:</p>
+                <p id="aiPlanSummary" class="text-muted">Dynamic checks recommended based on the actual dataset profile:</p>
                 <div id="aiPlanChecksList" class="list-group list-group-flush small" style="max-height: 350px; overflow-y: auto;">
                   No adaptive plan generated yet.
                 </div>
@@ -537,6 +527,7 @@
           </div>
         </div>
 
+        <!-- AI Executive Recommendations Card -->
         <div class="card-custom">
           <div class="card-header-custom">
             <h5>Executive Recommendations & Action Items</h5>
@@ -545,7 +536,7 @@
             <div id="aiExecutiveSummary" class="mb-3 p-3 bg-light rounded text-muted">
               AI executive findings will appear here.
             </div>
-            <h6 class="fw-bold mb-2 small text-uppercase">Immediate Action Items:</h6>
+            <h6 class="fw-bold mb-2">Immediate Action Items:</h6>
             <ul id="aiActionItemsList" class="mb-0 text-muted">
               <li>Upload a dataset to generate immediate action items.</li>
             </ul>
@@ -553,31 +544,29 @@
         </div>
       </div>
 
-      <!-- ================= SECTION: CLEANING PIPELINE ================= -->
+      <!-- ================= SECTION 7: DATA CLEANING ================= -->
       <div id="section-cleaning" class="content-section d-none">
-        <h2 class="page-header-title">Data Cleaning Pipeline</h2>
-        <p class="page-header-desc">Interactively preview transformations, approve granular fixes, and generate a sanitized dataset copy.</p>
-
-        <div class="card-custom p-3 mb-4">
-          <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <div class="card-custom p-4 mb-4">
+          <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
             <div>
-              <span class="small fw-semibold text-muted">Select operations to approve and apply to a sanitized dataset:</span>
+              <h4 class="fw-bold text-primary mb-1">Interactive Data Cleaning Console</h4>
+              <p class="text-muted mb-0">Preview before-and-after transformations, selectively approve fixes, and generate a verified, sanitized dataset. The original file is preserved.</p>
             </div>
             <div class="d-flex gap-2">
               <button class="btn btn-outline-secondary btn-sm" onclick="toggleSelectAllCleaning(true)">Select All</button>
               <button class="btn btn-outline-secondary btn-sm" onclick="toggleSelectAllCleaning(false)">Deselect All</button>
-              <button id="btnApplyCleaning" class="btn btn-primary-custom btn-sm" onclick="applyApprovedCleaning()">
+              <button id="btnApplyCleaning" class="btn btn-success" onclick="applyApprovedCleaning()">
                 <i class="bi bi-check2-circle me-1"></i> Apply Approved Cleanings
               </button>
             </div>
           </div>
         </div>
 
-        <!-- Cleaning Operations Table -->
+        <!-- Cleaning Operations List -->
         <div class="card-custom mb-4">
           <div class="card-header-custom">
             <h5>Recommended Cleaning Operations</h5>
-            <span id="cleaningSelectedCount" class="pill-badge active">0 Selected</span>
+            <span id="cleaningSelectedCount" class="badge bg-primary">0 Selected</span>
           </div>
           <div class="card-body-custom p-0">
             <div class="table-responsive">
@@ -604,15 +593,15 @@
         <div id="cleaningAuditCard" class="card-custom d-none">
           <div class="card-header-custom">
             <h5 class="text-success"><i class="bi bi-patch-check-fill me-2"></i>Applied Sanitization Audit Log</h5>
-            <span id="cleaningScoreDelta" class="pill-badge ready">Score Improved!</span>
+            <span id="cleaningScoreDelta" class="badge bg-success">Score Improved!</span>
           </div>
           <div class="card-body-custom">
             <ul id="cleaningAuditList" class="list-group mb-3"></ul>
             <div class="d-flex gap-2">
-              <button class="btn btn-primary-custom btn-sm" onclick="downloadCleanedData('csv')">
+              <button class="btn btn-primary-custom" onclick="downloadCleanedData('csv')">
                 <i class="bi bi-download me-1"></i> Download Cleaned CSV
               </button>
-              <button class="btn btn-outline-primary btn-sm" onclick="downloadCleanedData('xlsx')">
+              <button class="btn btn-outline-primary" onclick="downloadCleanedData('xlsx')">
                 <i class="bi bi-file-earmark-excel me-1"></i> Download Cleaned Excel
               </button>
             </div>
@@ -620,17 +609,14 @@
         </div>
       </div>
 
-      <!-- ================= SECTION: REPORTS & EXPORT ================= -->
+      <!-- ================= SECTION 8: REPORTS & EXPORTS ================= -->
       <div id="section-reports" class="content-section d-none">
-        <h2 class="page-header-title">Reports & Cleaned Dataset Export</h2>
-        <p class="page-header-desc">Download comprehensive executive audit PDF reports, multi-tab Excel workbooks, or sanitized datasets.</p>
-
         <div class="row g-4 mb-4">
           <div class="col-lg-6">
             <div class="card-custom p-4 text-center h-100">
-              <i class="bi bi-file-earmark-pdf text-danger fs-1 mb-2"></i>
+              <i class="bi bi-file-earmark-pdf text-danger fs-1 mb-3"></i>
               <h4 class="fw-bold text-primary mb-2">Executive Audit PDF Report</h4>
-              <p class="text-muted small mb-4">Official multi-page PDF document featuring executive summary cards, dimensional scoring breakdown, column health matrix, AI insights, and issue remediation log.</p>
+              <p class="text-muted mb-4">Comprehensive multi-page PDF document featuring executive summary cards, dimensional scoring breakdown, column health matrix, AI insights, and issue remediation log.</p>
               <button id="btnGenPdf" class="btn btn-primary-custom mt-auto" onclick="generateReports('pdf')">
                 <i class="bi bi-download me-2"></i>Download Official PDF Audit Report
               </button>
@@ -639,9 +625,9 @@
 
           <div class="col-lg-6">
             <div class="card-custom p-4 text-center h-100">
-              <i class="bi bi-file-earmark-excel text-success fs-1 mb-2"></i>
+              <i class="bi bi-file-earmark-excel text-success fs-1 mb-3"></i>
               <h4 class="fw-bold text-primary mb-2">Multi-Sheet Quality Excel Summary</h4>
-              <p class="text-muted small mb-4">Spreadsheet workbook containing 4 dedicated tabs: Executive Summary, Column Quality Scores, Detected Issues & Anomalies, and the Cleaning Audit Log.</p>
+              <p class="text-muted mb-4">Formatted spreadsheet containing 4 dedicated tabs: Executive Summary, Column Quality Scores, Detected Issues & Anomalies, and the Cleaning Audit Log.</p>
               <button id="btnGenExcel" class="btn btn-success mt-auto" onclick="generateReports('excel')">
                 <i class="bi bi-download me-2"></i>Download Multi-Sheet Excel Summary
               </button>
@@ -652,9 +638,9 @@
         <div class="row g-4">
           <div class="col-lg-6">
             <div class="card-custom p-4 text-center h-100">
-              <i class="bi bi-filetype-csv text-primary fs-1 mb-2"></i>
+              <i class="bi bi-filetype-csv text-primary fs-1 mb-3"></i>
               <h4 class="fw-bold text-primary mb-2">Cleaned Dataset (CSV)</h4>
-              <p class="text-muted small mb-4">Sanitized dataset in standard CSV format with all user-approved transformations applied.</p>
+              <p class="text-muted mb-4">Download the sanitized dataset in standardized CSV format with all user-approved transformations applied. Preserves original row alignments.</p>
               <button id="btnGenCleanCsv" class="btn btn-primary-custom mt-auto" onclick="downloadCleanedData('csv')">
                 <i class="bi bi-download me-2"></i>Download Cleaned CSV Dataset
               </button>
@@ -663,9 +649,9 @@
 
           <div class="col-lg-6">
             <div class="card-custom p-4 text-center h-100">
-              <i class="bi bi-file-earmark-spreadsheet text-info fs-1 mb-2"></i>
+              <i class="bi bi-file-earmark-spreadsheet text-info fs-1 mb-3"></i>
               <h4 class="fw-bold text-primary mb-2">Cleaned Dataset (Excel)</h4>
-              <p class="text-muted small mb-4">Sanitized dataset in Microsoft Excel (.xlsx) format ready for immediate BI and analytics use.</p>
+              <p class="text-muted mb-4">Download the sanitized dataset in Microsoft Excel (.xlsx) spreadsheet format ready for immediate BI and reporting use.</p>
               <button id="btnGenCleanXlsx" class="btn btn-outline-primary mt-auto" onclick="downloadCleanedData('xlsx')">
                 <i class="bi bi-download me-2"></i>Download Cleaned Excel Dataset
               </button>
@@ -674,80 +660,24 @@
         </div>
       </div>
 
-      <!-- ================= SECTION: SCAN HISTORY ================= -->
-      <div id="section-history" class="content-section d-none">
-        <h2 class="page-header-title">Scan History</h2>
-        <p class="page-header-desc">Historical log of all datasets analyzed during the current server session.</p>
-
-        <div class="card-custom">
-          <div class="card-body-custom p-0">
-            <div class="table-responsive">
-              <table class="table table-custom mb-0">
-                <thead>
-                  <tr>
-                    <th>Dataset Filename</th>
-                    <th>Analyzed At</th>
-                    <th>Records</th>
-                    <th>Columns</th>
-                    <th>Quality Score</th>
-                    <th>Health Rating</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody id="recentSessionsTableBody">
-                  <tr><td colspan="7" class="text-center py-4 text-muted">No scan history recorded yet.</td></tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- ================= SECTION: SETTINGS ================= -->
-      <div id="section-settings" class="content-section d-none">
-        <h2 class="page-header-title">Engine & AI Configuration</h2>
-        <p class="page-header-desc">System runtime parameters, Gemini model status, and upload limits.</p>
-
-        <div class="card-custom p-4">
-          <div class="row g-3">
-            <div class="col-md-6">
-              <label class="form-label small text-muted">AI Provider & Model</label>
-              <input type="text" class="form-control" value="Google Gemini (gemini-3.5-flash-lite)" readonly>
-            </div>
-            <div class="col-md-6">
-              <label class="form-label small text-muted">Execution Mode</label>
-              <input type="text" class="form-control" value="Deterministic Python 3.12 Engine + Gemini Heuristics" readonly>
-            </div>
-            <div class="col-md-6">
-              <label class="form-label small text-muted">Max Upload File Size</label>
-              <input type="text" class="form-control" value="32 MB (Configurable)" readonly>
-            </div>
-            <div class="col-md-6">
-              <label class="form-label small text-muted">Active Scoring Formula</label>
-              <input type="text" class="form-control" value="25% Comp + 20% Uniq + 30% Valid + 25% Consist" readonly>
-            </div>
-          </div>
-        </div>
-      </div>
-
     </main>
   </div>
 
-  <!-- Preview Fix Modal -->
+  <!-- Preview Modal -->
   <div class="modal fade" id="previewModal" tabindex="-1">
     <div class="modal-dialog modal-lg modal-dialog-centered">
-      <div class="modal-content" style="border-radius: 14px; border: 1px solid var(--border-color);">
-        <div class="modal-header border-bottom">
-          <h5 class="modal-title fw-bold text-primary" id="previewModalTitle">Before & After Transformation Preview</h5>
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title fw-bold" id="previewModalTitle">Before & After Transformation Preview</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
-        <div class="modal-body p-4">
-          <div id="previewModalDesc" class="p-3 bg-light rounded mb-3 small text-muted"></div>
+        <div class="modal-body">
+          <p id="previewModalDesc" class="text-muted small mb-3"></p>
           <div class="table-responsive">
-            <table class="table table-bordered table-sm mb-0">
+            <table class="table table-bordered table-sm">
               <thead class="table-light">
                 <tr>
-                  <th style="width: 100px;">Row #</th>
+                  <th style="width: 70px;">Row #</th>
                   <th>Target Column</th>
                   <th>Original Value (Before)</th>
                   <th>Transformed Value (After)</th>
@@ -757,7 +687,7 @@
             </table>
           </div>
         </div>
-        <div class="modal-footer border-top">
+        <div class="modal-footer">
           <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
         </div>
       </div>
