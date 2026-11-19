@@ -594,7 +594,7 @@ function renderAiInsights(understanding, plan, explanations) {
 
 let currentApprovedIssueIds = new Set();
 let activePreviewIssueId = null;
-let manualOverridesMap = new Map(); // issueId -> manualValue string
+let manualRowOverridesMap = new Map(); // issueId -> Map(rowNum -> customVal)
 let currentModalPreviewSamples = []; // cached sample rows
 let currentSuggestedRawValue = "";
 
@@ -619,8 +619,8 @@ function renderCleaningConsole(issues) {
 
     const suggestedDesc = iss.suggested_value_desc || `Apply ${iss.cleaning_rule || 'rule'}`;
     const sampleProblems = (iss.problematic_samples || []).slice(0, 3).map(s => escapeHtml(String(s))).join(", ");
-    const hasManual = manualOverridesMap.has(iss.id);
-    const manualVal = manualOverridesMap.get(iss.id);
+    const hasManual = manualRowOverridesMap.has(iss.id) && manualRowOverridesMap.get(iss.id).size > 0;
+    const manualCount = hasManual ? manualRowOverridesMap.get(iss.id).size : 0;
 
     const tr = document.createElement("tr");
     tr.id = `cleaning-row-${iss.id}`;
@@ -640,7 +640,7 @@ function renderCleaningConsole(issues) {
           <i class="bi bi-lightbulb-fill text-warning me-1"></i><b>Suggested:</b> ${escapeHtml(suggestedDesc)}
         </div>
         <div id="row-manual-badge-${iss.id}">
-          ${hasManual ? `<span class="badge bg-info text-dark mt-1"><i class="bi bi-pencil-fill me-1"></i>Manual: "${escapeHtml(manualVal)}"</span>` : ''}
+          ${hasManual ? `<span class="badge bg-info text-dark mt-1"><i class="bi bi-pencil-fill me-1"></i>${manualCount} Row(s) Custom Corrected</span>` : ''}
         </div>
       </td>
       <td>
@@ -657,7 +657,7 @@ function renderCleaningConsole(issues) {
       <td><b>${iss.affected_count}</b></td>
       <td>
         <button class="btn btn-sm btn-outline-primary w-100" onclick="showPreviewModal('${iss.id}')">
-          <i class="bi bi-eye me-1"></i> Preview & Approve
+          <i class="bi bi-pencil-square me-1"></i> Review & Edit Rows
         </button>
       </td>
     `;
@@ -771,56 +771,98 @@ function updateModalApprovalBadge(isApproved) {
   }
 }
 
-function onCorrectionStrategyChanged() {
-  const isManual = document.getElementById("radioStrategyManual").checked;
-  const manualInput = document.getElementById("manualValueInput");
-  const applyBtn = document.getElementById("btnApplyManualToPreview");
-
-  if (isManual) {
-    manualInput.disabled = false;
-    applyBtn.disabled = false;
-    if (!manualInput.value && currentSuggestedRawValue) {
-      manualInput.placeholder = `e.g. ${currentSuggestedRawValue}`;
-    }
-    manualInput.focus();
-    applyManualValueToPreview();
-  } else {
-    manualInput.disabled = true;
-    applyBtn.disabled = true;
-    if (activePreviewIssueId) {
-      manualOverridesMap.delete(activePreviewIssueId);
-      updateRowManualBadge(activePreviewIssueId, null);
-    }
-    renderModalPreviewTable(currentModalPreviewSamples, null);
+function onSingleRowInput(rowNum, val) {
+  if (!activePreviewIssueId) return;
+  if (!manualRowOverridesMap.has(activePreviewIssueId)) {
+    manualRowOverridesMap.set(activePreviewIssueId, new Map());
   }
+  const rowMap = manualRowOverridesMap.get(activePreviewIssueId);
+  rowMap.set(Number(rowNum), val);
+
+  // Visual highlight for modified input
+  const inputEl = document.getElementById(`row-val-input-${rowNum}`);
+  const sample = currentModalPreviewSamples.find(s => s.row === Number(rowNum));
+  if (inputEl && sample) {
+    if (val !== sample.after) {
+      inputEl.classList.add("border-primary", "bg-primary-subtle", "bg-opacity-10");
+    } else {
+      inputEl.classList.remove("border-primary", "bg-primary-subtle", "bg-opacity-10");
+    }
+  }
+
+  updateRowManualBadge(activePreviewIssueId);
 }
 
-function onManualValueInput(val) {
-  if (document.getElementById("radioStrategyManual").checked) {
-    applyManualValueToPreview();
+function resetSingleRow(rowNum) {
+  const sample = currentModalPreviewSamples.find(s => s.row === Number(rowNum));
+  if (!sample) return;
+  const inputEl = document.getElementById(`row-val-input-${rowNum}`);
+  if (inputEl) {
+    inputEl.value = sample.after;
+    inputEl.classList.remove("border-primary", "bg-primary-subtle", "bg-opacity-10");
   }
+  if (activePreviewIssueId && manualRowOverridesMap.has(activePreviewIssueId)) {
+    manualRowOverridesMap.get(activePreviewIssueId).delete(Number(rowNum));
+  }
+  updateRowManualBadge(activePreviewIssueId);
 }
 
-function applyManualValueToPreview() {
+function bulkFillAllRows() {
   if (!activePreviewIssueId) return;
   const val = document.getElementById("manualValueInput").value;
-  manualOverridesMap.set(activePreviewIssueId, val);
-  updateRowManualBadge(activePreviewIssueId, val);
-  renderModalPreviewTable(currentModalPreviewSamples, val);
+  if (val === "" || val === null || val === undefined) {
+    showAlert("warning", "Please type a value to quick-fill all rows.");
+    return;
+  }
+
+  if (!manualRowOverridesMap.has(activePreviewIssueId)) {
+    manualRowOverridesMap.set(activePreviewIssueId, new Map());
+  }
+  const rowMap = manualRowOverridesMap.get(activePreviewIssueId);
+
+  currentModalPreviewSamples.forEach(s => {
+    rowMap.set(s.row, val);
+    const inputEl = document.getElementById(`row-val-input-${s.row}`);
+    if (inputEl) {
+      inputEl.value = val;
+      inputEl.classList.add("border-primary", "bg-primary-subtle", "bg-opacity-10");
+    }
+  });
+
+  updateRowManualBadge(activePreviewIssueId);
+  showAlert("info", `Filled '${escapeHtml(val)}' into all ${currentModalPreviewSamples.length} rows. You can still modify any individual row.`);
 }
 
-function updateRowManualBadge(issueId, manualVal) {
-  const container = document.getElementById(`row-manual-badge-${issueId}`);
-  if (container) {
-    if (manualVal !== null && manualVal !== undefined && manualVal !== "") {
-      container.innerHTML = `<span class="badge bg-info text-dark mt-1"><i class="bi bi-pencil-fill me-1"></i>Manual: "${escapeHtml(manualVal)}"</span>`;
-    } else {
-      container.innerHTML = "";
+function resetAllRowsToSuggested() {
+  if (!activePreviewIssueId) return;
+  if (manualRowOverridesMap.has(activePreviewIssueId)) {
+    manualRowOverridesMap.delete(activePreviewIssueId);
+  }
+  currentModalPreviewSamples.forEach(s => {
+    const inputEl = document.getElementById(`row-val-input-${s.row}`);
+    if (inputEl) {
+      inputEl.value = s.after;
+      inputEl.classList.remove("border-primary", "bg-primary-subtle", "bg-opacity-10");
     }
+  });
+  const bulkInput = document.getElementById("manualValueInput");
+  if (bulkInput) bulkInput.value = "";
+  updateRowManualBadge(activePreviewIssueId);
+  showAlert("info", "All rows reset to recommended values.");
+}
+
+function updateRowManualBadge(issueId) {
+  const container = document.getElementById(`row-manual-badge-${issueId}`);
+  if (!container) return;
+  const rowMap = manualRowOverridesMap.get(issueId);
+  if (rowMap && rowMap.size > 0) {
+    container.innerHTML = `<span class="badge bg-info text-dark mt-1"><i class="bi bi-pencil-fill me-1"></i>${rowMap.size} Row(s) Custom Corrected</span>`;
+  } else {
+    container.innerHTML = "";
   }
 }
 
-function renderModalPreviewTable(samples, manualOverrideVal) {
+function renderModalPreviewTable(samples, issueId) {
   const tbody = document.getElementById("previewModalTableBody");
   tbody.innerHTML = "";
 
@@ -829,17 +871,31 @@ function renderModalPreviewTable(samples, manualOverrideVal) {
     return;
   }
 
+  const rowMap = manualRowOverridesMap.get(issueId) || new Map();
+
   samples.forEach(s => {
     const tr = document.createElement("tr");
-    const afterDisplay = (manualOverrideVal !== null && manualOverrideVal !== undefined && manualOverrideVal !== "")
-      ? `<span class="diff-add border border-info">${escapeHtml(manualOverrideVal)} <small class="text-muted fst-italic">(Manual Override)</small></span>`
-      : `<span class="diff-add">${escapeHtml(s.after)}</span>`;
+    const currentVal = rowMap.has(s.row) ? rowMap.get(s.row) : s.after;
+    const isCustomized = rowMap.has(s.row) && rowMap.get(s.row) !== s.after;
 
     tr.innerHTML = `
       <td><span class="badge bg-primary fs-6">Row #${s.row}</span></td>
       <td><code>${escapeHtml(s.column)}</code></td>
-      <td><span class="diff-del">${escapeHtml(s.before)}</span></td>
-      <td>${afterDisplay}</td>
+      <td><span class="diff-del font-monospace">${escapeHtml(s.before)}</span></td>
+      <td>
+        <div class="input-group input-group-sm">
+          <input type="text" 
+                 class="form-control form-control-sm font-monospace fw-semibold row-value-input ${isCustomized ? 'border-primary bg-primary-subtle bg-opacity-10' : ''}" 
+                 id="row-val-input-${s.row}"
+                 data-row="${s.row}" 
+                 value="${escapeHtml(String(currentVal))}" 
+                 placeholder="Enter value for Row #${s.row}..." 
+                 oninput="onSingleRowInput(${s.row}, this.value)">
+          <button class="btn btn-outline-secondary btn-sm" type="button" title="Reset this row to suggested" onclick="resetSingleRow(${s.row})">
+            <i class="bi bi-arrow-counterclockwise"></i>
+          </button>
+        </div>
+      </td>
     `;
     tbody.appendChild(tr);
   });
@@ -848,23 +904,22 @@ function renderModalPreviewTable(samples, manualOverrideVal) {
 function modalApproveCurrentIssue() {
   if (!activePreviewIssueId) return;
 
-  const isManual = document.getElementById("radioStrategyManual").checked;
-  if (isManual) {
-    const val = document.getElementById("manualValueInput").value.trim();
-    if (!val) {
-      showAlert("warning", "Please enter a manual value before approving with manual override.");
-      document.getElementById("manualValueInput").focus();
-      return;
-    }
-    manualOverridesMap.set(activePreviewIssueId, val);
-    updateRowManualBadge(activePreviewIssueId, val);
-  } else {
-    manualOverridesMap.delete(activePreviewIssueId);
-    updateRowManualBadge(activePreviewIssueId, null);
+  // Sync all values currently typed into the inputs
+  const inputs = document.querySelectorAll(".row-value-input");
+  if (!manualRowOverridesMap.has(activePreviewIssueId)) {
+    manualRowOverridesMap.set(activePreviewIssueId, new Map());
   }
+  const rowMap = manualRowOverridesMap.get(activePreviewIssueId);
+
+  inputs.forEach(inp => {
+    const r = Number(inp.getAttribute("data-row"));
+    const v = inp.value;
+    rowMap.set(r, v);
+  });
 
   setIssueApproval(activePreviewIssueId, true);
-  showAlert("success", `Approved correction for this operation!`);
+  updateRowManualBadge(activePreviewIssueId);
+  showAlert("success", `Approved correction for '${escapeHtml(currentSessionData.issues.find(i=>i.id===activePreviewIssueId)?.title || "")}'!`);
 }
 
 function modalRejectCurrentIssue() {
@@ -880,30 +935,6 @@ function showPreviewModal(issueId) {
 
   activePreviewIssueId = issueId;
   const isApproved = currentApprovedIssueIds.has(issueId);
-  const hasManual = manualOverridesMap.has(issueId);
-  const existingManualVal = manualOverridesMap.get(issueId) || "";
-
-  // Set radios and inputs
-  const radioSuggested = document.getElementById("radioStrategySuggested");
-  const radioManual = document.getElementById("radioStrategyManual");
-  const manualInput = document.getElementById("manualValueInput");
-  const applyBtn = document.getElementById("btnApplyManualToPreview");
-
-  if (hasManual && existingManualVal !== "") {
-    if (radioManual) radioManual.checked = true;
-    if (manualInput) {
-      manualInput.disabled = false;
-      manualInput.value = existingManualVal;
-    }
-    if (applyBtn) applyBtn.disabled = false;
-  } else {
-    if (radioSuggested) radioSuggested.checked = true;
-    if (manualInput) {
-      manualInput.disabled = true;
-      manualInput.value = "";
-    }
-    if (applyBtn) applyBtn.disabled = true;
-  }
 
   updateModalApprovalBadge(isApproved);
 
@@ -920,7 +951,7 @@ function showPreviewModal(issueId) {
     rowPillsHtml = pills + morePill;
   }
 
-  document.getElementById("previewModalTitle").textContent = `Review & Approve Correction: ${issue.title}`;
+  document.getElementById("previewModalTitle").textContent = `Row-by-Row Review & Edit: ${issue.title}`;
   document.getElementById("previewModalDesc").innerHTML = `
     <div class="mb-2">
       <b>Transformation Rule:</b> <code>${escapeHtml(issue.cleaning_rule)}</code> 
@@ -938,7 +969,7 @@ function showPreviewModal(issueId) {
   `;
 
   const tbody = document.getElementById("previewModalTableBody");
-  tbody.innerHTML = `<tr><td colspan="4" class="text-center py-3">Loading current values and generating correction preview...</td></tr>`;
+  tbody.innerHTML = `<tr><td colspan="4" class="text-center py-3">Loading row-by-row data...</td></tr>`;
 
   if (previewModalInstance) previewModalInstance.show();
 
@@ -970,9 +1001,8 @@ function showPreviewModal(issueId) {
         const modalSugText = document.getElementById("modalSuggestedValueText");
         if (modalSugText) modalSugText.textContent = sugText;
 
-        // Render preview table
-        const activeManualVal = hasManual && existingManualVal !== "" ? existingManualVal : null;
-        renderModalPreviewTable(currentModalPreviewSamples, activeManualVal);
+        // Render row-by-row preview table
+        renderModalPreviewTable(currentModalPreviewSamples, issueId);
       } else {
         tbody.innerHTML = `<tr><td colspan="4" class="text-center py-3 text-muted">No sample row changes generated or row dropped. Identified affected rows: <b>${affectedList}</b></td></tr>`;
       }
@@ -995,20 +1025,25 @@ function applyApprovedCleaning() {
     return;
   }
 
-  const manualOverridesObj = {};
+  // Build row-by-row overrides object
+  const overridesPayload = {};
   currentApprovedIssueIds.forEach(id => {
-    if (manualOverridesMap.has(id)) {
-      const val = manualOverridesMap.get(id);
-      if (val !== null && val !== undefined && val !== "") {
-        manualOverridesObj[id] = val;
+    if (manualRowOverridesMap.has(id)) {
+      const rowMap = manualRowOverridesMap.get(id);
+      if (rowMap && rowMap.size > 0) {
+        const rowObj = {};
+        rowMap.forEach((v, k) => {
+          rowObj[String(k)] = v;
+        });
+        overridesPayload[id] = rowObj;
       }
     }
   });
 
-  const manualCount = Object.keys(manualOverridesObj).length;
-  const promptMsg = manualCount > 0
-    ? `Confirm Human Approval: You have approved ${approvedIds.length} cleaning transformation(s), including ${manualCount} custom manual override(s). Proceed?`
-    : `Confirm Human Approval: You have approved ${approvedIds.length} cleaning transformation(s). Proceed?`;
+  const customRowsCount = Object.values(overridesPayload).reduce((acc, curr) => acc + Object.keys(curr).length, 0);
+  const promptMsg = customRowsCount > 0
+    ? `Confirm Human Approval: You have approved ${approvedIds.length} cleaning operation(s), with ${customRowsCount} row-specific custom value(s). Proceed?`
+    : `Confirm Human Approval: You have approved ${approvedIds.length} cleaning operation(s). Proceed?`;
 
   if (!confirm(promptMsg)) {
     return;
@@ -1021,7 +1056,7 @@ function applyApprovedCleaning() {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       approved_issue_ids: approvedIds,
-      manual_overrides: manualOverridesObj
+      manual_overrides: overridesPayload
     })
   })
     .then(r => r.json())
@@ -1141,9 +1176,10 @@ window.modalApproveCurrentIssue = modalApproveCurrentIssue;
 window.modalRejectCurrentIssue = modalRejectCurrentIssue;
 window.showPreviewModal = showPreviewModal;
 window.applyApprovedCleaning = applyApprovedCleaning;
-window.onCorrectionStrategyChanged = onCorrectionStrategyChanged;
-window.onManualValueInput = onManualValueInput;
-window.applyManualValueToPreview = applyManualValueToPreview;
+window.onSingleRowInput = onSingleRowInput;
+window.resetSingleRow = resetSingleRow;
+window.bulkFillAllRows = bulkFillAllRows;
+window.resetAllRowsToSuggested = resetAllRowsToSuggested;
 
 // ----------------- UTILITIES -----------------
 

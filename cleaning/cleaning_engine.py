@@ -90,7 +90,7 @@ class CleaningEngine:
         return f"Apply rule '{rule}'"
 
     @classmethod
-    def generate_preview(cls, df: pd.DataFrame, issue: Dict[str, Any], max_samples: int = 5) -> List[Dict[str, Any]]:
+    def generate_preview(cls, df: pd.DataFrame, issue: Dict[str, Any], max_samples: int = 50) -> List[Dict[str, Any]]:
         """
         Generates before-and-after previews for affected rows without altering original data.
         """
@@ -291,38 +291,78 @@ class CleaningEngine:
             col = params.get("column") or issue.get("column")
             affected_rows = issue.get("affected_rows", [])
 
-            # Check if user entered a custom manual override value
-            has_manual_override = (issue_id in manual_overrides and manual_overrides[issue_id] is not None and str(manual_overrides[issue_id]).strip() != "")
+            # Check if user entered custom manual override values (dict or scalar)
+            has_manual_override = (
+                issue_id in manual_overrides and 
+                manual_overrides[issue_id] is not None and 
+                (isinstance(manual_overrides[issue_id], dict) or str(manual_overrides[issue_id]).strip() != "")
+            )
 
             try:
                 if has_manual_override and col and col in cleaned_df.columns:
                     manual_val = manual_overrides[issue_id]
-                    # Attempt numeric cast if target column is numeric
-                    if pd.api.types.is_numeric_dtype(cleaned_df[col]):
-                        try:
-                            if "." in str(manual_val):
-                                manual_val = float(manual_val)
+
+                    if isinstance(manual_val, dict):
+                        # Row-by-row manual corrections
+                        modified_count = 0
+                        for r_key, r_val in manual_val.items():
+                            if r_val is None or str(r_val).strip() == "":
+                                continue
+                            try:
+                                r_num = int(r_key)
+                            except ValueError:
+                                continue
+
+                            val_to_set = r_val
+                            if pd.api.types.is_numeric_dtype(cleaned_df[col]):
+                                try:
+                                    val_to_set = float(val_to_set) if "." in str(val_to_set) else int(val_to_set)
+                                except ValueError:
+                                    cleaned_df[col] = cleaned_df[col].astype(object)
+
+                            if "_row_number" in cleaned_df.columns:
+                                r_mask = cleaned_df["_row_number"] == r_num
+                                if r_mask.any():
+                                    cleaned_df.loc[r_mask, col] = val_to_set
+                                    modified_count += 1
                             else:
-                                manual_val = int(manual_val)
-                        except ValueError:
-                            cleaned_df[col] = cleaned_df[col].astype(object)
+                                if 0 <= r_num < len(cleaned_df):
+                                    cleaned_df.loc[r_num, col] = val_to_set
+                                    modified_count += 1
 
-                    if "_row_number" in cleaned_df.columns and affected_rows:
-                        row_mask = cleaned_df["_row_number"].isin(affected_rows)
-                        count = int(row_mask.sum())
-                        cleaned_df.loc[row_mask, col] = manual_val
+                        audit_log.append({
+                            "operation": f"User row-by-row custom corrections applied ({modified_count} customized rows)",
+                            "column": col,
+                            "modified_rows": modified_count
+                        })
+                        continue
                     else:
-                        cleaned_df, meta = CleaningOperations.impute_missing(
-                            cleaned_df, col, strategy="constant", fill_value=manual_val
-                        )
-                        count = meta.get("modified_rows", 0)
+                        # Scalar value applied to all affected rows
+                        if pd.api.types.is_numeric_dtype(cleaned_df[col]):
+                            try:
+                                if "." in str(manual_val):
+                                    manual_val = float(manual_val)
+                                else:
+                                    manual_val = int(manual_val)
+                            except ValueError:
+                                cleaned_df[col] = cleaned_df[col].astype(object)
 
-                    audit_log.append({
-                        "operation": f"User manual correction applied: '{manual_val}'",
-                        "column": col,
-                        "modified_rows": count
-                    })
-                    continue
+                        if "_row_number" in cleaned_df.columns and affected_rows:
+                            row_mask = cleaned_df["_row_number"].isin(affected_rows)
+                            count = int(row_mask.sum())
+                            cleaned_df.loc[row_mask, col] = manual_val
+                        else:
+                            cleaned_df, meta = CleaningOperations.impute_missing(
+                                cleaned_df, col, strategy="constant", fill_value=manual_val
+                            )
+                            count = meta.get("modified_rows", 0)
+
+                        audit_log.append({
+                            "operation": f"User manual correction applied: '{manual_val}'",
+                            "column": col,
+                            "modified_rows": count
+                        })
+                        continue
 
                 if rule in ("impute_median", "impute_mean", "impute_mode", "fill_constant"):
                     strat = "median" if "median" in rule else ("mean" if "mean" in rule else ("mode" if "mode" in rule else "constant"))
